@@ -3,7 +3,6 @@
 #include "main.h"
 #include "stm32l4xx_hal.h"
 #include "gpio.h"
-
 /* USER CODE BEGIN Includes */
 #include "joystick.h"
 /* USER CODE END Includes */
