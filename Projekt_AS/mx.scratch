@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project>
-<ProjectName>C:\Users\szuha\Desktop\stm32-workspace\Projekt_AS\\Projekt_AS</ProjectName>
+<ProjectName>C:\Users\szuha\git\Projekt_AS\Projekt_AS\\Projekt_AS</ProjectName>
 <ProjectNature>C</ProjectNature> 
 <CMSIS>..\Drivers\CMSIS</CMSIS>
 <HAL_Driver>C:\Users\szuha\STM32Cube\Repository\STM32Cube_FW_L4_V1.11.0\Drivers\CMSIS</HAL_Driver>
@@ -32,7 +32,7 @@
     <usedDebug>true</usedDebug>
     	<debugprobe></debugprobe>
     <optimization></optimization>
-    <icfloc>1</icfloc>
+    <icfloc>0</icfloc>
     <Adefines>
         <define></define>
     </Adefines>   
