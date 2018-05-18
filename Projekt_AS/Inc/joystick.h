@@ -16,7 +16,6 @@ void doJoyAction(uint16_t joyX_Pin, menu dest) {
 	if (dest == mainMenu) {
 		switch (joyX_Pin) {
 		case joyCenter_Pin:
-			HAL_GPIO_TogglePin(ledGreen_GPIO_Port, ledGreen_Pin);
 			break;
 			//case inne opcje
 		default:

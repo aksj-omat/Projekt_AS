@@ -39,11 +39,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32l4xx_hal.h"
+#include "dfsdm.h"
 #include "lcd.h"
+#include "sai.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
 #include "joystick.h"
+#include "BSP/STM32L476G-Discovery/stm32l476g_discovery.h"
+#include "BSP/STM32L476G-Discovery/stm32l476g_discovery_glass_lcd.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -95,7 +99,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LCD_Init();
+  MX_DFSDM1_Init();
+  MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -160,8 +167,18 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1
+                              |RCC_PERIPHCLK_DFSDM1;
+  PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
+  PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
+  PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
+  PeriphClkInit.PLLSAI1.PLLSAI1N = 16;
+  PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
+  PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_SAI1CLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);

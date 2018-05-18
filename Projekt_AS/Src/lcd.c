@@ -55,13 +55,13 @@ void MX_LCD_Init(void)
   hlcd.Instance = LCD;
   hlcd.Init.Prescaler = LCD_PRESCALER_1;
   hlcd.Init.Divider = LCD_DIVIDER_16;
-  hlcd.Init.Duty = LCD_DUTY_1_4;
+  hlcd.Init.Duty = LCD_DUTY_STATIC;
   hlcd.Init.Bias = LCD_BIAS_1_4;
   hlcd.Init.VoltageSource = LCD_VOLTAGESOURCE_INTERNAL;
   hlcd.Init.Contrast = LCD_CONTRASTLEVEL_0;
   hlcd.Init.DeadTime = LCD_DEADTIME_0;
   hlcd.Init.PulseOnDuration = LCD_PULSEONDURATION_0;
-  hlcd.Init.MuxSegment = LCD_MUXSEGMENT_ENABLE;
+  hlcd.Init.MuxSegment = LCD_MUXSEGMENT_DISABLE;
   hlcd.Init.BlinkMode = LCD_BLINKMODE_OFF;
   hlcd.Init.BlinkFrequency = LCD_BLINKFREQUENCY_DIV8;
   hlcd.Init.HighDrive = LCD_HIGHDRIVE_DISABLE;
@@ -86,67 +86,21 @@ void HAL_LCD_MspInit(LCD_HandleTypeDef* lcdHandle)
   
     /**LCD GPIO Configuration    
     PC3     ------> LCD_VLCD
-    PA6     ------> LCD_SEG3
-    PA7     ------> LCD_SEG4
-    PC4     ------> LCD_SEG22
-    PC5     ------> LCD_SEG23
-    PB0     ------> LCD_SEG5
-    PB1     ------> LCD_SEG6
-    PB12     ------> LCD_SEG12
-    PB13     ------> LCD_SEG13
-    PB14     ------> LCD_SEG14
-    PB15     ------> LCD_SEG15
-    PD8     ------> LCD_SEG28
-    PD9     ------> LCD_SEG29
-    PD10     ------> LCD_SEG30
-    PD11     ------> LCD_SEG31
-    PD12     ------> LCD_SEG32
-    PD13     ------> LCD_SEG33
-    PD14     ------> LCD_SEG34
-    PD15     ------> LCD_SEG35
-    PC6     ------> LCD_SEG24
-    PC7     ------> LCD_SEG25
-    PC8     ------> LCD_SEG26
-    PA8     ------> LCD_COM0
-    PA9     ------> LCD_COM1
-    PA10     ------> LCD_COM2
-    PA15 (JTDI)     ------> LCD_SEG17
-    PB4 (NJTRST)     ------> LCD_SEG8
-    PB5     ------> LCD_SEG9
-    PB9     ------> LCD_COM3 
+    PA8     ------> LCD_COM0 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_3|LCD_SEG22_USER_Pin|LCD_SEG1_USER_Pin|LCD_SEG14_USER_Pin 
-                          |LCD_SEG9_USER_Pin|LCD_SEG13_USER_Pin;
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF11_LCD;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = LCD_SEG23_USER_Pin|LCD_SEG0_USER_Pin|GPIO_PIN_8|GPIO_PIN_9 
-                          |GPIO_PIN_10|LCD_SEG10_USER_Pin;
+    GPIO_InitStruct.Pin = GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF11_LCD;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = LCD_SEG21_USER_Pin|LCD_SEG2_USER_Pin|LCD_SEG20_USER_Pin|LCD_SEG3_USER_Pin 
-                          |LCD_SEG19_USER_Pin|LCD_SEG4_USER_Pin|LCD_SEG11_USER_Pin|LCD_SEG12_USER_Pin 
-                          |GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF11_LCD;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = LCD_SEG18_USER_Pin|LCD_SEG5_USER_Pin|LCD_SEG17_USER_Pin|LCD_SEG6_USER_Pin 
-                          |LCD_SEG16_USER_Pin|LCD_SEG7_USER_Pin|LCD_SEG15_USER_Pin|LCD_SEG8_USER_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF11_LCD;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN LCD_MspInit 1 */
 
@@ -167,47 +121,11 @@ void HAL_LCD_MspDeInit(LCD_HandleTypeDef* lcdHandle)
   
     /**LCD GPIO Configuration    
     PC3     ------> LCD_VLCD
-    PA6     ------> LCD_SEG3
-    PA7     ------> LCD_SEG4
-    PC4     ------> LCD_SEG22
-    PC5     ------> LCD_SEG23
-    PB0     ------> LCD_SEG5
-    PB1     ------> LCD_SEG6
-    PB12     ------> LCD_SEG12
-    PB13     ------> LCD_SEG13
-    PB14     ------> LCD_SEG14
-    PB15     ------> LCD_SEG15
-    PD8     ------> LCD_SEG28
-    PD9     ------> LCD_SEG29
-    PD10     ------> LCD_SEG30
-    PD11     ------> LCD_SEG31
-    PD12     ------> LCD_SEG32
-    PD13     ------> LCD_SEG33
-    PD14     ------> LCD_SEG34
-    PD15     ------> LCD_SEG35
-    PC6     ------> LCD_SEG24
-    PC7     ------> LCD_SEG25
-    PC8     ------> LCD_SEG26
-    PA8     ------> LCD_COM0
-    PA9     ------> LCD_COM1
-    PA10     ------> LCD_COM2
-    PA15 (JTDI)     ------> LCD_SEG17
-    PB4 (NJTRST)     ------> LCD_SEG8
-    PB5     ------> LCD_SEG9
-    PB9     ------> LCD_COM3 
+    PA8     ------> LCD_COM0 
     */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_3|LCD_SEG22_USER_Pin|LCD_SEG1_USER_Pin|LCD_SEG14_USER_Pin 
-                          |LCD_SEG9_USER_Pin|LCD_SEG13_USER_Pin);
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_3);
 
-    HAL_GPIO_DeInit(GPIOA, LCD_SEG23_USER_Pin|LCD_SEG0_USER_Pin|GPIO_PIN_8|GPIO_PIN_9 
-                          |GPIO_PIN_10|LCD_SEG10_USER_Pin);
-
-    HAL_GPIO_DeInit(GPIOB, LCD_SEG21_USER_Pin|LCD_SEG2_USER_Pin|LCD_SEG20_USER_Pin|LCD_SEG3_USER_Pin 
-                          |LCD_SEG19_USER_Pin|LCD_SEG4_USER_Pin|LCD_SEG11_USER_Pin|LCD_SEG12_USER_Pin 
-                          |GPIO_PIN_9);
-
-    HAL_GPIO_DeInit(GPIOD, LCD_SEG18_USER_Pin|LCD_SEG5_USER_Pin|LCD_SEG17_USER_Pin|LCD_SEG6_USER_Pin 
-                          |LCD_SEG16_USER_Pin|LCD_SEG7_USER_Pin|LCD_SEG15_USER_Pin|LCD_SEG8_USER_Pin);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_8);
 
   /* USER CODE BEGIN LCD_MspDeInit 1 */
 
