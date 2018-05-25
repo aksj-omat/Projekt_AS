@@ -16,8 +16,17 @@ void doJoyAction(uint16_t joyX_Pin, menu dest) {
 	if (dest == mainMenu) {
 		switch (joyX_Pin) {
 		case joyCenter_Pin:
+			BSP_LCD_GLASS_Clear();
+			 BSP_LCD_GLASS_DisplayString("srodek");
 			break;
-			//case inne opcje
+		case joyDown_Pin:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString("dol");
+			break;
+		case joyUp_Pin:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString("gora");
+			break;
 		default:
 			break;
 		}

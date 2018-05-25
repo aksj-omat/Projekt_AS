@@ -48,6 +48,7 @@
 #include "joystick.h"
 #include "BSP/STM32L476G-Discovery/stm32l476g_discovery.h"
 #include "BSP/STM32L476G-Discovery/stm32l476g_discovery_glass_lcd.h"
+#include "BSP/STM32L476G-Discovery/stm32l476g_discovery_audio.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -98,11 +99,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_LCD_Init();
-  MX_DFSDM1_Init();
-  MX_SAI1_Init();
+ // MX_SAI1_Init();
+  //MX_DFSDM1_Init();
+  //MX_LCD_Init();
   /* USER CODE BEGIN 2 */
-
+  BSP_LCD_GLASS_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,7 +112,10 @@ int main(void)
   {
 	  if(isJoyClicked(joyCenter_Pin,joyCenter_GPIO_Port))
 		  doJoyAction(joyCenter_Pin,mainMenu);
+	  if(isJoyClicked(joyUp_Pin,joyUp_GPIO_Port))
+	  		  doJoyAction(joyUp_Pin,mainMenu);
 	  HAL_Delay(200);
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
