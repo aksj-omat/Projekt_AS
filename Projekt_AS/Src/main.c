@@ -101,7 +101,7 @@ int main(void)
   MX_GPIO_Init();
  // MX_SAI1_Init();
   //MX_DFSDM1_Init();
-  //MX_LCD_Init();
+  //MX_LCD_Init(); //musi byc zakomentowane, zeby dzialalo
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
   /* USER CODE END 2 */
