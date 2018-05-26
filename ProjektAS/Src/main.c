@@ -55,7 +55,12 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+#define BUFFER_SIZE         ((uint32_t)0x0200)
+#define WRITE_READ_ADDR     ((uint32_t)0x0050)
+#define QSPI_BASE_ADDR      ((uint32_t)0x90000000)
 
+uint8_t qspi_aTxBuffer[BUFFER_SIZE];
+uint8_t qspi_aRxBuffer[BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +68,9 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-
+static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset);
+static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
+void qspi_test();
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -106,8 +113,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
   BSP_QSPI_Init();
-  BSP_LCD_GLASS_DisplayString("OK");
-  /* USER CODE END 2 */
+  //test QSPI
+  qspi_test();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -122,7 +129,54 @@ int main(void)
   /* USER CODE END 3 */
 
 }
+static void Fill_Buffer(uint8_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
+{
+  uint32_t tmpIndex = 0;
 
+  /* Put in global buffer different values */
+  for (tmpIndex = 0; tmpIndex < uwBufferLenght; tmpIndex++ )
+  {
+    pBuffer[tmpIndex] = tmpIndex + uwOffset;
+  }
+}
+
+static uint8_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength)
+{
+  while (BufferLength--)
+  {
+    if (*pBuffer1 != *pBuffer2)
+    {
+      return 1;
+    }
+
+    pBuffer1++;
+    pBuffer2++;
+  }
+
+  return 0;
+}
+
+void qspi_test(){
+	__IO uint8_t *data_ptr;
+	uint32_t index;
+	BSP_QSPI_Erase_Block(WRITE_READ_ADDR);			//wyczysc blok pamieci
+	Fill_Buffer(qspi_aTxBuffer, BUFFER_SIZE, 0xD20F);//wypelnij losowa wartoscia
+	BSP_QSPI_Write(qspi_aTxBuffer, WRITE_READ_ADDR, BUFFER_SIZE); //wpisz bufor pod wskazany adres
+	BSP_QSPI_Read(qspi_aRxBuffer, WRITE_READ_ADDR, BUFFER_SIZE);
+	if (Buffercmp(qspi_aRxBuffer, qspi_aTxBuffer, BUFFER_SIZE) > 0)
+		BSP_LCD_GLASS_DisplayString("err");
+	else
+		BSP_LCD_GLASS_DisplayString("OK1");
+	BSP_QSPI_EnableMemoryMappedMode();
+	for (index = 0, data_ptr = (__IO uint8_t *) (QSPI_BASE_ADDR + WRITE_READ_ADDR); index < BUFFER_SIZE; index++, data_ptr++) {
+		if (*data_ptr != qspi_aTxBuffer[index]) {
+			BSP_LCD_GLASS_DisplayString("err2");
+			break;
+		}
+	}
+	if (index == BUFFER_SIZE)
+		BSP_LCD_GLASS_DisplayString("OK2");
+}
 /**
   * @brief System Clock Configuration
   * @retval None
