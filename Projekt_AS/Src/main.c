@@ -46,9 +46,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "joystick.h"
-#include "BSP/STM32L476G-Discovery/stm32l476g_discovery.h"
-#include "BSP/STM32L476G-Discovery/stm32l476g_discovery_glass_lcd.h"
-#include "BSP/STM32L476G-Discovery/stm32l476g_discovery_audio.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/

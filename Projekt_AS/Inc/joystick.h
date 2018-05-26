@@ -2,6 +2,7 @@
 #ifndef JOYSTICK_H_
 #define JOYSTICK_H_
 #include "gpio.h"
+#include "lcd.h"
 
 typedef enum {
 	mainMenu, msgSelection
