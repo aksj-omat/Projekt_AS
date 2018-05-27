@@ -49,18 +49,43 @@
 #include "stm32l476g_discovery.h"
 #include "stm32l476g_discovery_glass_lcd.h"
 #include "stm32l476g_discovery_qspi.h"
+#include "stm32l476g_discovery_audio.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+//QSPI --------------------------------------------------------------------------------------------------------------------
 /* Private variables ---------------------------------------------------------*/
 #define BUFFER_SIZE         ((uint32_t)0x0200)
 #define WRITE_READ_ADDR     ((uint32_t)0x0050)
 #define QSPI_BASE_ADDR      ((uint32_t)0x90000000)
-
 uint8_t qspi_aTxBuffer[BUFFER_SIZE];
 uint8_t qspi_aRxBuffer[BUFFER_SIZE];
+static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset);
+static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
+static void qspi_test();
+//AUDIO --------------------------------------------------------------------------------------------------------------------
+typedef enum
+{
+  BUFFER_OFFSET_NONE = 0,
+  BUFFER_OFFSET_HALF,
+  BUFFER_OFFSET_FULL,
+ } Record_buffer_offset_Typedef;
+
+#define RECORD_BUFFER_SIZE (uint32_t)2048
+ /* Buffer containing the PCM samples coming from the microphone */
+ static uint16_t RecordBuffer[RECORD_BUFFER_SIZE];
+
+ /* Buffer used to stream the recorded PCM samples towards the audio codec. */
+ static uint16_t PlaybackBuffer[RECORD_BUFFER_SIZE*2];
+ static Record_buffer_offset_Typedef  Record_buffer_offset = BUFFER_OFFSET_NONE;
+ /* Audio recorder callback functions */
+ static void audio_in_transfer_complete_callback(void);
+ static void audio_in_half_transfer_callback(void);
+ static void audio_in_error_callback(void);
+ static void audio_test(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,12 +93,23 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset);
-static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
-void qspi_test();
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+
+/* Private define ------------------------------------------------------------*/
+
+
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+
+/* Information indicating which part of the recorded buffer is ready for audio loopback  */
+
+
+/* Private function prototypes -----------------------------------------------*/
+
 
 /* USER CODE END 0 */
 
@@ -115,7 +151,9 @@ int main(void)
   BSP_QSPI_Init();
   //test QSPI
   qspi_test();
-
+  HAL_Delay(3000);
+  //test Audio
+  audio_test();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -132,12 +170,8 @@ int main(void)
 static void Fill_Buffer(uint8_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
 {
   uint32_t tmpIndex = 0;
-
-  /* Put in global buffer different values */
   for (tmpIndex = 0; tmpIndex < uwBufferLenght; tmpIndex++ )
-  {
     pBuffer[tmpIndex] = tmpIndex + uwOffset;
-  }
 }
 
 static uint8_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength)
@@ -145,14 +179,10 @@ static uint8_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLe
   while (BufferLength--)
   {
     if (*pBuffer1 != *pBuffer2)
-    {
       return 1;
-    }
-
     pBuffer1++;
     pBuffer2++;
   }
-
   return 0;
 }
 
@@ -177,6 +207,92 @@ void qspi_test(){
 	if (index == BUFFER_SIZE)
 		BSP_LCD_GLASS_DisplayString("OK2");
 }
+
+void audio_test(void)
+{
+  uint32_t audio_out_start = RESET ;
+  uint32_t i;
+  Record_buffer_offset = BUFFER_OFFSET_NONE; //ustaw offset
+
+  if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE,  80,  BSP_AUDIO_FREQUENCY_8K) != AUDIO_OK) //inicjuj audio output
+	  BSP_LCD_GLASS_DisplayString("Aerr"); //jezeli blad
+
+  BSP_AUDIO_OUT_ChangeAudioConfig(BSP_AUDIO_OUT_CIRCULARMODE|BSP_AUDIO_OUT_STEREOMODE); //ustaw audio circular i tryb stereo
+
+  if (BSP_AUDIO_IN_Init(BSP_AUDIO_FREQUENCY_8K, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR) != AUDIO_OK) //inicjuj audio in
+	  BSP_LCD_GLASS_DisplayString("Aerr2");	//jezeli blad
+
+  BSP_AUDIO_IN_RegisterCallbacks(audio_in_error_callback, audio_in_half_transfer_callback, audio_in_transfer_complete_callback); //ustaw callbacki
+
+  if (BSP_AUDIO_IN_Record(RecordBuffer, RECORD_BUFFER_SIZE) != AUDIO_OK) //inicjuj audio input
+	  BSP_LCD_GLASS_DisplayString("Aerr3"); //jezeli blad
+
+  while (1) //odtwarzaj w petli
+  {
+    if(Record_buffer_offset != BUFFER_OFFSET_NONE) //kiedy 1sza lub 2ga polowa jest gotowa do skopiowania (callback od record in)
+    {
+      if(Record_buffer_offset == BUFFER_OFFSET_HALF) //kiedy 1sza polowa jest gotowa do skopiowania
+      {
+        for(i = 0; i < (RECORD_BUFFER_SIZE/2); i++) //kopiuj jako stereo
+        {
+          PlaybackBuffer[2*i]     = RecordBuffer[i];
+          PlaybackBuffer[(2*i)+1] = PlaybackBuffer[2*i];
+        }
+        if (audio_out_start == RESET) //1szy raz tutaj - wlacz auido
+        {
+          if (BSP_AUDIO_OUT_Play(PlaybackBuffer, RECORD_BUFFER_SIZE*2) != AUDIO_OK)
+        	  BSP_LCD_GLASS_DisplayString("Aerr4"); //jezeli blad
+
+          audio_out_start = SET;
+        }
+      }
+      else { //jezeli druga polowa bufora jest gotowa
+        for(i = (RECORD_BUFFER_SIZE/2); i < RECORD_BUFFER_SIZE; i++) //kopiuj jako stereo
+        {
+          PlaybackBuffer[2*i]     = RecordBuffer[i];
+          PlaybackBuffer[(2*i)+1] = PlaybackBuffer[2*i];
+        }
+      }
+      Record_buffer_offset = BUFFER_OFFSET_NONE; //po przekopiowaniu ustaw znowu flage
+    }
+  }
+}
+/**
+  * @brief Callback function invoked when half of the PCM samples have been
+  *        DM Atransfered from the DFSDM channel.
+  * @param  None
+  * @retval None
+  */
+void audio_in_transfer_complete_callback(void)
+{
+
+  Record_buffer_offset = BUFFER_OFFSET_FULL;
+}
+
+/**
+  * @brief Callback function invoked when all the PCM samples have been
+  *        DMA transfered from the DFSDM channel.
+  * @param  None
+  * @retval None
+  */
+void audio_in_half_transfer_callback(void)
+{
+  Record_buffer_offset = BUFFER_OFFSET_HALF;
+}
+
+/**
+  * @brief Callback function invoked when an error occured durint he DMA
+  *        transfer of the PCM samples from the DFSDM channel.
+  * @param  None
+  * @retval None
+  */
+void audio_in_error_callback(void)
+{
+  /* Stop the program with an infinite loop */
+  Error_Handler();
+}
+
+
 /**
   * @brief System Clock Configuration
   * @retval None
