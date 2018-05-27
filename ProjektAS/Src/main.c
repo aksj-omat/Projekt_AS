@@ -144,16 +144,15 @@ int main(void)
   MX_GPIO_Init();
   MX_DFSDM1_Init();
   MX_SAI1_Init();
- // MX_LCD_Init(); //musi byc zakomentowane
- // MX_QUADSPI_Init(); //czy musi??
+ // MX_LCD_Init();
+  MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
-  BSP_QSPI_Init();
-  //test QSPI
   qspi_test();
-  HAL_Delay(3000);
-  //test Audio
+  HAL_Delay(2000);
   audio_test();
+  /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -164,7 +163,7 @@ int main(void)
   /* USER CODE BEGIN 3 */
 
   }
-  /* USER CODE END 3 */
+
 
 }
 static void Fill_Buffer(uint8_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
@@ -189,6 +188,7 @@ static uint8_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLe
 void qspi_test(){
 	__IO uint8_t *data_ptr;
 	uint32_t index;
+	BSP_QSPI_Init();
 	BSP_QSPI_Erase_Block(WRITE_READ_ADDR);			//wyczysc blok pamieci
 	Fill_Buffer(qspi_aTxBuffer, BUFFER_SIZE, 0xD20F);//wypelnij losowa wartoscia
 	BSP_QSPI_Write(qspi_aTxBuffer, WRITE_READ_ADDR, BUFFER_SIZE); //wpisz bufor pod wskazany adres
@@ -214,19 +214,25 @@ void audio_test(void)
   uint32_t i;
   Record_buffer_offset = BUFFER_OFFSET_NONE; //ustaw offset
 
-  if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE,  80,  BSP_AUDIO_FREQUENCY_8K) != AUDIO_OK) //inicjuj audio output
+  if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE,  80,  BSP_AUDIO_FREQUENCY_8K) != AUDIO_OK){ //inicjuj audio output
 	  BSP_LCD_GLASS_DisplayString("Aerr"); //jezeli blad
+	  HAL_Delay(3000);
+  }
 
   BSP_AUDIO_OUT_ChangeAudioConfig(BSP_AUDIO_OUT_CIRCULARMODE|BSP_AUDIO_OUT_STEREOMODE); //ustaw audio circular i tryb stereo
 
-  if (BSP_AUDIO_IN_Init(BSP_AUDIO_FREQUENCY_8K, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR) != AUDIO_OK) //inicjuj audio in
+  if (BSP_AUDIO_IN_Init(BSP_AUDIO_FREQUENCY_8K, DEFAULT_AUDIO_IN_BIT_RESOLUTION, DEFAULT_AUDIO_IN_CHANNEL_NBR) != AUDIO_OK){ //inicjuj audio in
 	  BSP_LCD_GLASS_DisplayString("Aerr2");	//jezeli blad
+	  HAL_Delay(3000);
+  }
 
   BSP_AUDIO_IN_RegisterCallbacks(audio_in_error_callback, audio_in_half_transfer_callback, audio_in_transfer_complete_callback); //ustaw callbacki
 
-  if (BSP_AUDIO_IN_Record(RecordBuffer, RECORD_BUFFER_SIZE) != AUDIO_OK) //inicjuj audio input
+  if (BSP_AUDIO_IN_Record(RecordBuffer, RECORD_BUFFER_SIZE) != AUDIO_OK){ //inicjuj audio input
 	  BSP_LCD_GLASS_DisplayString("Aerr3"); //jezeli blad
-
+	  HAL_Delay(3000);
+  }
+  BSP_LCD_GLASS_DisplayString("OK3");
   while (1) //odtwarzaj w petli
   {
     if(Record_buffer_offset != BUFFER_OFFSET_NONE) //kiedy 1sza lub 2ga polowa jest gotowa do skopiowania (callback od record in)
@@ -257,6 +263,7 @@ void audio_test(void)
     }
   }
 }
+
 /**
   * @brief Callback function invoked when half of the PCM samples have been
   *        DM Atransfered from the DFSDM channel.
@@ -291,7 +298,7 @@ void audio_in_error_callback(void)
   /* Stop the program with an infinite loop */
   Error_Handler();
 }
-
+/* USER CODE END 3 */
 
 /**
   * @brief System Clock Configuration
@@ -337,9 +344,9 @@ void SystemClock_Config(void)
   PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
-  PeriphClkInit.PLLSAI1.PLLSAI1M = 3;
+  PeriphClkInit.PLLSAI1.PLLSAI1M = 6;
   PeriphClkInit.PLLSAI1.PLLSAI1N = 8;
-  PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
+  PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV17;
   PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
   PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
   PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_SAI1CLK;
