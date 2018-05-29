@@ -1,0 +1,53 @@
+Configuration	ProjektAS_HAL
+STM32CubeMX 	4.25.0
+Date	05/27/2018
+MCU	STM32L476VCTx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+I2C1	I2C	I2C1_SCL	PB6
+I2C1	I2C	I2C1_SDA	PB7
+SAI1:SAI A	Master with Master Clock Out	SAI1_SD_A	PE6
+SAI1:SAI A	Master with Master Clock Out	SAI1_SCK_A	PE5
+SAI1:SAI A	Master with Master Clock Out	SAI1_FS_A	PE4
+SAI1:SAI A	Master with Master Clock Out	SAI1_MCLK_A	PE2
+SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+1	PE2	SAI1_MCLK_A	
+3	PE4	SAI1_FS_A	
+4	PE5	SAI1_SCK_A	
+5	PE6	SAI1_SD_A	
+92	PB6	I2C1_SCL	
+93	PB7	I2C1_SDA	
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : ProjektAS_HAL
+Project Folder : C:\Users\szuha\Desktop\stm32-workspace\ProjektAS_HAL
+Toolchain / IDE : TrueSTUDIO
+Firmware Package Name and Version : STM32Cube FW_L4 V1.11.0
+
+
+Code Generation Settings : 
+STM32Cube Firmware Library Package : Copy only the necessary library files
+Generate peripheral initialization as a pair of '.c/.h' files per peripheral : Yes
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : No
+
+
+Toolchains Settings : 
+Compiler Optimizations : Balanced Size/Speed
+
+
+
+
+
+
