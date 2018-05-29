@@ -40,6 +40,7 @@
 #include "main.h"
 #include "stm32l4xx_hal.h"
 #include "dfsdm.h"
+#include "dma.h"
 #include "lcd.h"
 #include "quadspi.h"
 #include "sai.h"
@@ -121,7 +122,16 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	/*/////////////////////////////////////////////////////////////////////////////////////////////////////////////////// INFORMACJE!!!
+			PRZY PRZEBUDOWYWANIU PROJEKTU W CUBE
+			USTAWIC W SystemClock_Config()
+				RCC_OscInitStruct.PLL.PLLM = 1;
+			ZAKOMENTOWAC W SAI.C ORAZ DFSDM.C "*..MSP_INIT..* ORAZ *..MSP_DEINIT..*
+			ZAKOMENTOWAC MX_LCD_INIT(); PRZED MAINEM
 
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -142,9 +152,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DFSDM1_Init();
-  MX_SAI1_Init();
- // MX_LCD_Init();
+  MX_DMA_Init();
+ // MX_DFSDM1_Init();
+  //MX_SAI1_Init();
+  MX_LCD_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
@@ -297,8 +308,10 @@ void audio_in_error_callback(void)
 {
   /* Stop the program with an infinite loop */
   Error_Handler();
+
+  /* USER CODE END 3 */
+
 }
-/* USER CODE END 3 */
 
 /**
   * @brief System Clock Configuration
@@ -317,8 +330,14 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_11;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 40;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -328,12 +347,12 @@ void SystemClock_Config(void)
     */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -344,8 +363,8 @@ void SystemClock_Config(void)
   PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
-  PeriphClkInit.PLLSAI1.PLLSAI1M = 6;
-  PeriphClkInit.PLLSAI1.PLLSAI1N = 8;
+  PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
+  PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
   PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV17;
   PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
   PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;

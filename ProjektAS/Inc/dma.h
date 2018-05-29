@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : DFSDM.c
-  * Description        : This file provides code for the configuration
-  *                      of the DFSDM instances.
+  * File Name          : dma.h
+  * Description        : This file contains all the function prototypes for
+  *                      the dma.c file
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -36,83 +36,40 @@
   *
   ******************************************************************************
   */
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __dma_H
+#define __dma_H
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "dfsdm.h"
+#include "stm32l4xx_hal.h"
+#include "main.h"
 
-/* USER CODE BEGIN 0 */
+/* DMA memory to memory transfer handles -------------------------------------*/
+extern void _Error_Handler(char*, int);
 
-/* USER CODE END 0 */
+/* USER CODE BEGIN Includes */
 
-DFSDM_Channel_HandleTypeDef hdfsdm1_channel0;
+/* USER CODE END Includes */
 
-/* DFSDM1 init function */
-void MX_DFSDM1_Init(void)
-{
+/* USER CODE BEGIN Private defines */
 
-  hdfsdm1_channel0.Instance = DFSDM1_Channel0;
-  hdfsdm1_channel0.Init.OutputClock.Activation = DISABLE;
-  hdfsdm1_channel0.Init.OutputClock.Selection = DFSDM_CHANNEL_OUTPUT_CLOCK_SYSTEM;
-  hdfsdm1_channel0.Init.OutputClock.Divider = 2;
-  hdfsdm1_channel0.Init.Input.Multiplexer = DFSDM_CHANNEL_INTERNAL_REGISTER;
-  hdfsdm1_channel0.Init.Input.DataPacking = DFSDM_CHANNEL_STANDARD_MODE;
-  hdfsdm1_channel0.Init.Input.Pins = DFSDM_CHANNEL_SAME_CHANNEL_PINS;
-  hdfsdm1_channel0.Init.SerialInterface.Type = DFSDM_CHANNEL_SPI_RISING;
-  hdfsdm1_channel0.Init.SerialInterface.SpiClock = DFSDM_CHANNEL_SPI_CLOCK_EXTERNAL;
-  hdfsdm1_channel0.Init.Awd.FilterOrder = DFSDM_CHANNEL_FASTSINC_ORDER;
-  hdfsdm1_channel0.Init.Awd.Oversampling = 1;
-  hdfsdm1_channel0.Init.Offset = 0x00;
-  hdfsdm1_channel0.Init.RightBitShift = 0x00;
-  if (HAL_DFSDM_ChannelInit(&hdfsdm1_channel0) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+/* USER CODE END Private defines */
 
+void MX_DMA_Init(void);
+
+/* USER CODE BEGIN Prototypes */
+
+/* USER CODE END Prototypes */
+
+#ifdef __cplusplus
 }
+#endif
 
-static uint32_t DFSDM1_Init = 0;
-//
-//void HAL_DFSDM_ChannelMspInit(DFSDM_Channel_HandleTypeDef* dfsdm_channelHandle)
-//{
-//
-//  if(DFSDM1_Init == 0)
-//  {
-//  /* USER CODE BEGIN DFSDM1_MspInit 0 */
-////
-//  /* USER CODE END DFSDM1_MspInit 0 */
-//    /* DFSDM1 clock enable */
-//    __HAL_RCC_DFSDM1_CLK_ENABLE();
-//  /* USER CODE BEGIN DFSDM1_MspInit 1 */
-////
-//  /* USER CODE END DFSDM1_MspInit 1 */
-//  DFSDM1_Init++;
-//  }
-//}
-//
-//void HAL_DFSDM_ChannelMspDeInit(DFSDM_Channel_HandleTypeDef* dfsdm_channelHandle)
-//{
-//
-//  DFSDM1_Init-- ;
-//  if(DFSDM1_Init == 0)
-//    {
-//  /* USER CODE BEGIN DFSDM1_MspDeInit 0 */
-////
-//  /* USER CODE END DFSDM1_MspDeInit 0 */
-//    /* Peripheral clock disable */
-//    __HAL_RCC_DFSDM1_CLK_DISABLE();
-//  /* USER CODE BEGIN DFSDM1_MspDeInit 1 */
-////
-//  /* USER CODE END DFSDM1_MspDeInit 1 */
-//  }
-//}
-
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
-
-/**
-  * @}
-  */
+#endif /* __dma_H */
 
 /**
   * @}
