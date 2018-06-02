@@ -70,17 +70,37 @@
 #define AUDIO_FILE_SIZE      (180*1024)
 #define PLAY_HEADER          0x2C
 #define PLAY_BUFF_SIZE       4096
+
 AUDIO_DrvTypeDef* audio_drv;
 
+uint8_t audio_volume = 50; //w procentach 0-100
+char audio_volume_chr[2];	//audio jako string
 uint16_t                     PlayBuff[PLAY_BUFF_SIZE];
 __IO int16_t                 UpdatePointer = -1;
+uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
 //QSPI--------------------------------------------------------
 #define BUFFER_SIZE         ((uint32_t)0x0200)
 #define WRITE_READ_ADDR     ((uint32_t)0x0050)
 #define QSPI_BASE_ADDR      ((uint32_t)0x90000000)
 uint8_t qspi_aTxBuffer[BUFFER_SIZE];
 uint8_t qspi_aRxBuffer[BUFFER_SIZE];
+//PROGRAM VARIABLES-------------------------------------------
+char* menu_main_opts[] = {"Play", "Rec"};
+#define MENU_MAIN_OPTS_SIZE 2
 
+typedef enum{
+	menu_main,
+	menu_audio_play,
+	menu_enter,
+	menu_leave
+}Menu_TypeDef;
+typedef enum{
+	menu_main_play,
+	menu_main_rec
+}Menu_main_opts_TypeDef;
+
+Menu_TypeDef app_state = menu_main;
+Menu_main_opts_TypeDef menu_main_curr_opt = menu_main_play;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,33 +108,61 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-static void codec_init();
-static void codec_start();
+static void audio_codec_init();
+static void audio_codec_resume();
+static void audio_codec_pause();
+static void audio_codec_update_volume();
 static void qspi_test();
+static void audio_buffer_init();
+static void audio_play();
 static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset);
 static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
-
+static void app_do_action();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == joy_center_Pin){
-		BSP_LCD_GLASS_Clear();
-		BSP_LCD_GLASS_DisplayString("CTR");
-	}else
-	if(GPIO_Pin == joy_down_Pin){
-			BSP_LCD_GLASS_Clear();
-			BSP_LCD_GLASS_DisplayString("DOWN");
-		}else
-	if(GPIO_Pin == joy_up_Pin){
-			BSP_LCD_GLASS_Clear();
-			BSP_LCD_GLASS_DisplayString("UP");
-		}else
-	if(GPIO_Pin == joy_left_Pin){
-			BSP_LCD_GLASS_Clear();
-			BSP_LCD_GLASS_DisplayString("LEFT");
-		}else
-	if(GPIO_Pin == joy_right_Pin){
-			BSP_LCD_GLASS_Clear();
-			BSP_LCD_GLASS_DisplayString("RIGHT");
+		if(app_state == menu_main){	//wejsc do menu
+			app_state = menu_enter;
 		}
+		else						//wyjdz z menu
+		{
+			app_state = menu_leave;
+		}
+	}
+
+	if (GPIO_Pin == joy_down_Pin) {
+		if (app_state == menu_main) { //zmien etykiete o jedna w dol
+			BSP_LCD_GLASS_Clear();
+			if (menu_main_curr_opt == 0)
+				menu_main_curr_opt = MENU_MAIN_OPTS_SIZE;
+			menu_main_curr_opt = (menu_main_curr_opt - 1) % MENU_MAIN_OPTS_SIZE;
+			BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);
+
+		}
+		if (app_state == menu_audio_play) { //scisz o 10 procent
+			audio_volume -= 10;
+			if (audio_volume < 0)
+				audio_volume = 0;
+			sprintf(audio_volume_chr, "%d", audio_volume);
+			BSP_LCD_GLASS_DisplayString(audio_volume_chr);
+			audio_codec_update_volume();
+		}
+	}
+
+	if(GPIO_Pin == joy_up_Pin){
+		if(app_state == menu_main){ //zmien etykiete o jedna w gore
+			BSP_LCD_GLASS_Clear();
+			menu_main_curr_opt = (menu_main_curr_opt + 1) % MENU_MAIN_OPTS_SIZE;
+			BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);
+		}
+		if(app_state == menu_audio_play){ //podglos o 10 procent
+			audio_volume += 10;
+			if(audio_volume > 90)
+				audio_volume = 90;
+			sprintf(audio_volume_chr,"%d",audio_volume);
+			BSP_LCD_GLASS_DisplayString(audio_volume_chr);
+			audio_codec_update_volume();
+		}
+	}
 
 }
 /* USER CODE END PFP */
@@ -131,7 +179,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -159,43 +206,18 @@ int main(void)
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
   qspi_test(); //ta funkcja rowniez inicjalizuje bsp_qspi!
-  codec_init();
-
-  if(*((uint64_t *)AUDIO_FILE_ADDRESS) != 0x017EFE2446464952 ) Error_Handler();
-  for(int i=0; i < PLAY_BUFF_SIZE; i+=2)
-   {
-     PlayBuff[i]=*((__IO uint16_t *)(AUDIO_FILE_ADDRESS + PLAY_HEADER + i));
-   }
-  codec_start();
+  audio_codec_init();
+  audio_buffer_init();
+  BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		while (UpdatePointer == -1)
-			;
-		//
-		int position = UpdatePointer;
-		UpdatePointer = -1;
-		//
-		/* Upate the first or the second part of the buffer */
-		for (int i = 0; i < PLAY_BUFF_SIZE / 2; i++) {
-			PlayBuff[i + position] = *(uint16_t *) (AUDIO_FILE_ADDRESS
-					+ PlaybackPosition);
-			PlaybackPosition += 2;
-		}
-
-		//    /* check the end of the file */
-		if ((PlaybackPosition + PLAY_BUFF_SIZE / 2) > AUDIO_FILE_SIZE) {
-			PlaybackPosition = PLAY_HEADER;
-		}
-
-		if (UpdatePointer != -1) {
-			/* Buffer update time is too long compare to the data transfer time */
-			Error_Handler();
-		}
-
+	  if(app_state == menu_enter){ //wykryto wybor podmenu
+		  app_do_action();
+	  }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -284,6 +306,27 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//APP ---------------------------------------------------------------------------------------------
+//wykonuje wybrane zadanie z menu glownego
+void app_do_action(){
+	switch(menu_main_curr_opt){
+	case menu_main_play: //wybrano odtwarzanie audio
+		app_state = menu_audio_play;
+		BSP_LCD_GLASS_Clear();
+		sprintf(audio_volume_chr,"%d", audio_volume);
+		BSP_LCD_GLASS_DisplayString(audio_volume_chr); //wyswietl akutalny poziom glosnosci
+		audio_play();									//graj audio
+		app_state = menu_main;							//wroc do menu
+		BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);//zaktualizuj etykiete
+		break;
+
+	default:
+		app_state = menu_main;
+		break;
+	}
+}
+//APP_END ---------------------------------------------------------------------------------------------
+//QSPI -------------------------------------------------------------------------------------
 static void Fill_Buffer(uint8_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
 {
   uint32_t tmpIndex = 0;
@@ -325,30 +368,81 @@ void qspi_test(){
 	if (index == BUFFER_SIZE)
 		BSP_LCD_GLASS_DisplayString("OK2");
 }
+//QSPI_END --------------------------------------------------------------------------------------
+//AUDIO -----------------------------------------------------------------------------------------
+//odtwarza audio w petli dopoki nie wykryto akcji powrotu
+void audio_play(){
+	audio_codec_resume();
+	while(app_state != menu_leave){
+			while (UpdatePointer == -1)
+				;
+			//
+			int position = UpdatePointer;
+			UpdatePointer = -1;
+			//
+			/* Upate the first or the second part of the buffer */
+			for (int i = 0; i < PLAY_BUFF_SIZE / 2; i++) {
+				PlayBuff[i + position] = *(uint16_t *) (AUDIO_FILE_ADDRESS
+						+ PlaybackPosition);
+				PlaybackPosition += 2;
+			}
 
+			//    /* check the end of the file */
+			if ((PlaybackPosition + PLAY_BUFF_SIZE / 2) > AUDIO_FILE_SIZE) {
+				PlaybackPosition = PLAY_HEADER;
+			}
 
-void codec_init(){
-		if (CS43L22_ID != cs43l22_drv.ReadID(AUDIO_I2C_ADDRESS)) {
-			Error_Handler();
-		}
-
-		audio_drv = &cs43l22_drv;
-		audio_drv->Reset(AUDIO_I2C_ADDRESS);
-		if (audio_drv->Init(AUDIO_I2C_ADDRESS, OUTPUT_DEVICE_HEADPHONE, 80, AUDIO_FREQUENCY_22K) != 0) {
-			Error_Handler();
-		}
+			if (UpdatePointer != -1) {
+				/* Buffer update time is too long compare to the data transfer time */
+				Error_Handler();
+			}
+	}
+	audio_codec_pause();
 
 }
-void codec_start(){
-	if(0 != audio_drv->Play(AUDIO_I2C_ADDRESS, NULL, 0))
-	  {
-	    Error_Handler();
-	  }
-	  if(HAL_OK != HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)PlayBuff, PLAY_BUFF_SIZE))
-	  {
-	    Error_Handler();
-	  }
+//pauzuje odtwarzanie audio
+void audio_codec_pause(){
+	audio_drv->Pause(AUDIO_I2C_ADDRESS);
 }
+//aktualizuje glosnosc audio
+void audio_codec_update_volume(){
+	audio_drv->SetVolume(AUDIO_I2C_ADDRESS,audio_volume);
+}
+//inicjalizuje codec i wlacza odtwarzanie audio, po czym je pauzuje
+void audio_codec_init(){
+	if (CS43L22_ID != cs43l22_drv.ReadID(AUDIO_I2C_ADDRESS)) {
+		Error_Handler();
+	}
+
+	audio_drv = &cs43l22_drv;
+	audio_drv->Reset(AUDIO_I2C_ADDRESS);
+	if (audio_drv->Init(AUDIO_I2C_ADDRESS, OUTPUT_DEVICE_HEADPHONE, audio_volume, AUDIO_FREQUENCY_22K) != 0) {
+		Error_Handler();
+	}
+	if (0 != audio_drv->Play(AUDIO_I2C_ADDRESS, NULL, 0)) {
+		Error_Handler();
+	}
+	if (HAL_OK
+			!= HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *) PlayBuff,
+					PLAY_BUFF_SIZE)) {
+		Error_Handler();
+	}
+	audio_codec_pause();
+
+}
+//wznawia odtwarzanie audio
+void audio_codec_resume(){
+	audio_drv->Resume(AUDIO_I2C_ADDRESS);
+}
+//inicjalizuje pierwsza czesc bufora audio
+void audio_buffer_init(){
+	if(*((uint64_t *)AUDIO_FILE_ADDRESS) != 0x017EFE2446464952 ) Error_Handler(); // czy wplik wgrany we flashu jest prawidlowy
+	  for(int i=0; i < PLAY_BUFF_SIZE; i+=2)
+	   {
+	     PlayBuff[i]=*((__IO uint16_t *)(AUDIO_FILE_ADDRESS + PLAY_HEADER + i));
+	   }
+}
+
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 {
 
@@ -361,7 +455,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 
   UpdatePointer = 0;
 }
-
+//AUDIO_END -----------------------------------------------------------------------------------------
 /* USER CODE END 4 */
 
 /**
