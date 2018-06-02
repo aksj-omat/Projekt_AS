@@ -4,8 +4,8 @@
 
 **  File        : stm32_flash.ld
 **
-**  Abstract    : Linker script for STM32L476VC Device with
-**                256KByte FLASH, 128KByte RAM
+**  Abstract    : Linker script for STM32L476VG Device with
+**                1024KByte FLASH, 128KByte RAM
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -42,7 +42,7 @@ MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 96K
 RAM2 (xrw)      : ORIGIN = 0x10000000, LENGTH = 32K
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 256K
+FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
 }
 
 /* Define output sections */

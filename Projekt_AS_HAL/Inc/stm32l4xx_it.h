@@ -1,14 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : gpio.c
-  * Description        : This file provides code for the configuration
-  *                      of all used GPIO pins.
+  * @file    stm32l4xx_it.h
+  * @brief   This file contains the headers of the interrupt handlers.
   ******************************************************************************
-  ** This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
   *
   * COPYRIGHT(c) 2018 STMicroelectronics
   *
@@ -37,41 +31,44 @@
   ******************************************************************************
   */
 
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __STM32L4xx_IT_H
+#define __STM32L4xx_IT_H
+
+#ifdef __cplusplus
+ extern "C" {
+#endif 
+
 /* Includes ------------------------------------------------------------------*/
-#include "gpio.h"
-/* USER CODE BEGIN 0 */
+#include "stm32l4xx_hal.h"
+#include "main.h"
+/* Exported types ------------------------------------------------------------*/
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 
-/* USER CODE END 0 */
+void NMI_Handler(void);
+void HardFault_Handler(void);
+void MemManage_Handler(void);
+void BusFault_Handler(void);
+void UsageFault_Handler(void);
+void SVC_Handler(void);
+void DebugMon_Handler(void);
+void PendSV_Handler(void);
+void SysTick_Handler(void);
+void EXTI0_IRQHandler(void);
+void EXTI1_IRQHandler(void);
+void EXTI2_IRQHandler(void);
+void EXTI3_IRQHandler(void);
+void EXTI9_5_IRQHandler(void);
+void DMA2_Channel1_IRQHandler(void);
+void QUADSPI_IRQHandler(void);
+void SAI1_IRQHandler(void);
 
-/*----------------------------------------------------------------------------*/
-/* Configure GPIO                                                             */
-/*----------------------------------------------------------------------------*/
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
-
-/** Pinout Configuration
-*/
-void MX_GPIO_Init(void)
-{
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
+#ifdef __cplusplus
 }
+#endif
 
-/* USER CODE BEGIN 2 */
-
-/* USER CODE END 2 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
+#endif /* __STM32L4xx_IT_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

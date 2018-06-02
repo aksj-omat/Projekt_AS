@@ -49,6 +49,22 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define joy_center_Pin GPIO_PIN_0
+#define joy_center_GPIO_Port GPIOA
+#define joy_center_EXTI_IRQn EXTI0_IRQn
+#define joy_left_Pin GPIO_PIN_1
+#define joy_left_GPIO_Port GPIOA
+#define joy_left_EXTI_IRQn EXTI1_IRQn
+#define joy_right_Pin GPIO_PIN_2
+#define joy_right_GPIO_Port GPIOA
+#define joy_right_EXTI_IRQn EXTI2_IRQn
+#define joy_up_Pin GPIO_PIN_3
+#define joy_up_GPIO_Port GPIOA
+#define joy_up_EXTI_IRQn EXTI3_IRQn
+#define joy_down_Pin GPIO_PIN_5
+#define joy_down_GPIO_Port GPIOA
+#define joy_down_EXTI_IRQn EXTI9_5_IRQn
+
 /* ########################## Assert Selection ############################## */
 /**
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 

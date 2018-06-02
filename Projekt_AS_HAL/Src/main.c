@@ -40,10 +40,11 @@
 #include "main.h"
 #include "stm32l4xx_hal.h"
 #include "dma.h"
-#include "sai.h"
-#include "gpio.h"
 #include "lcd.h"
 #include "quadspi.h"
+#include "sai.h"
+#include "gpio.h"
+
 /* USER CODE BEGIN Includes */
 #include "cs43l22.h"
 #include "stm32l476g_discovery.h"
@@ -92,6 +93,30 @@ static void codec_start();
 static void qspi_test();
 static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset);
 static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == joy_center_Pin){
+		BSP_LCD_GLASS_Clear();
+		BSP_LCD_GLASS_DisplayString("CTR");
+	}else
+	if(GPIO_Pin == joy_down_Pin){
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString("DOWN");
+		}else
+	if(GPIO_Pin == joy_up_Pin){
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString("UP");
+		}else
+	if(GPIO_Pin == joy_left_Pin){
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString("LEFT");
+		}else
+	if(GPIO_Pin == joy_right_Pin){
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString("RIGHT");
+		}
+
+}
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -129,11 +154,10 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SAI1_Init();
-  //MX_QUADSPI_Init();
-  BSP_LCD_GLASS_Init();
-  BSP_LCD_GLASS_DisplayString("elo");
+ // MX_LCD_Init();
+  MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-
+  BSP_LCD_GLASS_Init();
   qspi_test(); //ta funkcja rowniez inicjalizuje bsp_qspi!
   codec_init();
 
@@ -147,35 +171,40 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-   while(1)
-	    {
-	  //    /* Wait a callback event */
-	      while(UpdatePointer==-1);
-	  //
-	      int position = UpdatePointer;
-	      UpdatePointer = -1;
-	  //
-	      /* Upate the first or the second part of the buffer */
-	      for(int i = 0; i < PLAY_BUFF_SIZE/2; i++)
-	      {
-	        PlayBuff[i+position] = *(uint16_t *)(AUDIO_FILE_ADDRESS + PlaybackPosition);
-	        PlaybackPosition+=2;
-	      }
+  while (1)
+  {
+		while (UpdatePointer == -1)
+			;
+		//
+		int position = UpdatePointer;
+		UpdatePointer = -1;
+		//
+		/* Upate the first or the second part of the buffer */
+		for (int i = 0; i < PLAY_BUFF_SIZE / 2; i++) {
+			PlayBuff[i + position] = *(uint16_t *) (AUDIO_FILE_ADDRESS
+					+ PlaybackPosition);
+			PlaybackPosition += 2;
+		}
 
-	  //    /* check the end of the file */
-	      if((PlaybackPosition+PLAY_BUFF_SIZE/2) > AUDIO_FILE_SIZE)
-	      {
-	        PlaybackPosition = PLAY_HEADER;
-	      }
+		//    /* check the end of the file */
+		if ((PlaybackPosition + PLAY_BUFF_SIZE / 2) > AUDIO_FILE_SIZE) {
+			PlaybackPosition = PLAY_HEADER;
+		}
 
-	      if(UpdatePointer != -1)
-	      {
-	        /* Buffer update time is too long compare to the data transfer time */
-	        Error_Handler();
-	      }
-	    }
+		if (UpdatePointer != -1) {
+			/* Buffer update time is too long compare to the data transfer time */
+			Error_Handler();
+		}
+
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
+
+  }
+  /* USER CODE END 3 */
 
 }
+
 
 /**
   * @brief System Clock Configuration
@@ -190,14 +219,15 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
-  RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 40;
+  RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -220,8 +250,9 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1;
   PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
   PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
@@ -254,7 +285,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 static void Fill_Buffer(uint8_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
 {
   uint32_t tmpIndex = 0;
@@ -332,6 +362,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 
   UpdatePointer = 0;
 }
+
 /* USER CODE END 4 */
 
 /**
