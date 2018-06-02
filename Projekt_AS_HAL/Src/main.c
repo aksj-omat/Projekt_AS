@@ -60,7 +60,7 @@
  * 						USTAW W SYSTEMCLOCK_CONFIG
  * 						RCC_OscInitStruct.PLL.PLLM = 1;
  *						ZAKOMENTUJ //MX_LCD_INIT();
- *						KOLEJNOSC INICJALIZACJI PERYFERIOW MOZE MIEC ZNACZENIE?
+ *
  *
  *
  */
@@ -78,29 +78,32 @@ char audio_volume_chr[2];	//audio jako string
 uint16_t                     PlayBuff[PLAY_BUFF_SIZE];
 __IO int16_t                 UpdatePointer = -1;
 uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
-//QSPI--------------------------------------------------------
+//QSPI ----------------------------------------------------------------------------
 #define BUFFER_SIZE         ((uint32_t)0x0200)
 #define WRITE_READ_ADDR     ((uint32_t)0x0050)
 #define QSPI_BASE_ADDR      ((uint32_t)0x90000000)
 uint8_t qspi_aTxBuffer[BUFFER_SIZE];
 uint8_t qspi_aRxBuffer[BUFFER_SIZE];
-//PROGRAM VARIABLES-------------------------------------------
-char* menu_main_opts[] = {"Play", "Rec"};
+//APP -----------------------------------------------------------------------------
+
 #define MENU_MAIN_OPTS_SIZE 2
 
+//enum stanu aplikacji
 typedef enum{
-	menu_main,
-	menu_audio_play,
-	menu_enter,
-	menu_leave
-}Menu_TypeDef;
+	state_menu,			//w glownym menu
+	state_audio_play,	//w menu odtwarzania dzwieku/odtwarzanie dzwieku
+	state_menu_enter,	//wykonano akcje wejscia do podmenu
+	state_menu_leave	//wykonano akcje powrotu do menu glownego
+}App_states;
+//opcje dostepne w main menu, indeks odpowiada wyswietlanemu napisowi na LCD (patrz tablica menu_opts)
 typedef enum{
-	menu_main_play,
-	menu_main_rec
-}Menu_main_opts_TypeDef;
+	play_audio,
+	record_audio
+}App_menu_opts;
 
-Menu_TypeDef app_state = menu_main;
-Menu_main_opts_TypeDef menu_main_curr_opt = menu_main_play;
+char* menu_opts[] = {"Play", "Rec"};
+App_states app_state = state_menu;
+App_menu_opts menu_curr_opt = play_audio;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,63 +111,20 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-static void audio_codec_init();
-static void audio_codec_resume();
-static void audio_codec_pause();
-static void audio_codec_update_volume();
-static void qspi_test();
-static void audio_buffer_init();
-static void audio_play();
-static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset);
-static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
-static void app_do_action();
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == joy_center_Pin){
-		if(app_state == menu_main){	//wejsc do menu
-			app_state = menu_enter;
-		}
-		else						//wyjdz z menu
-		{
-			app_state = menu_leave;
-		}
-	}
-
-	if (GPIO_Pin == joy_down_Pin) {
-		if (app_state == menu_main) { //zmien etykiete o jedna w dol
-			BSP_LCD_GLASS_Clear();
-			if (menu_main_curr_opt == 0)
-				menu_main_curr_opt = MENU_MAIN_OPTS_SIZE;
-			menu_main_curr_opt = (menu_main_curr_opt - 1) % MENU_MAIN_OPTS_SIZE;
-			BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);
-
-		}
-		if (app_state == menu_audio_play) { //scisz o 10 procent
-			audio_volume -= 10;
-			if (audio_volume < 0)
-				audio_volume = 0;
-			sprintf(audio_volume_chr, "%d", audio_volume);
-			BSP_LCD_GLASS_DisplayString(audio_volume_chr);
-			audio_codec_update_volume();
-		}
-	}
-
-	if(GPIO_Pin == joy_up_Pin){
-		if(app_state == menu_main){ //zmien etykiete o jedna w gore
-			BSP_LCD_GLASS_Clear();
-			menu_main_curr_opt = (menu_main_curr_opt + 1) % MENU_MAIN_OPTS_SIZE;
-			BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);
-		}
-		if(app_state == menu_audio_play){ //podglos o 10 procent
-			audio_volume += 10;
-			if(audio_volume > 90)
-				audio_volume = 90;
-			sprintf(audio_volume_chr,"%d",audio_volume);
-			BSP_LCD_GLASS_DisplayString(audio_volume_chr);
-			audio_codec_update_volume();
-		}
-	}
-
-}
+//AUDIO -------------------------------------------------------------------------------------------------------
+static void audio_codec_init();			//inicjuje, wlacza i pauzuje audio codec
+static void audio_codec_resume();		//wznawia odtwarzanie dzwieku
+static void audio_codec_pause();		//pauzuje odtwarzanie dzwieku
+static void audio_codec_update_volume();//aktualizuje dzwiek wartoscia zmiennej audio_volume
+static void audio_buffer_init();		//inicializuje bufor audio
+static void audio_play();				//wznawia codec, uruchamia odtwarzanie dzieku, pauzuje przy wyjsciu
+//QSPI --------------------------------------------------------------------------------------------------------
+static void qspi_test();				//test poprawnosci dzialania qspi
+static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset); //napelnia bufor
+static uint8_t  Buffercmp   (uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);	//porownuje zawartosc buforow
+//APP ---------------------------------------------------------------------------------------------------------
+static void app_do_action();			//wykonuje akcje na podstawie aktualnego menu i nacisnietego przycisku
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);	//funkcja lapiaca przerwania z joysticka
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -205,17 +165,20 @@ int main(void)
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
-  qspi_test(); //ta funkcja rowniez inicjalizuje bsp_qspi!
+  //qspi_test();
   audio_codec_init();
   audio_buffer_init();
-  BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);
+
+  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--",1,SCROLL_SPEED_HIGH);
+  BSP_LCD_GLASS_Clear();
+  BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(app_state == menu_enter){ //wykryto wybor podmenu
+	  if(app_state == state_menu_enter){ //wykryto wybor podmenu
 		  app_do_action();
 	  }
   /* USER CODE END WHILE */
@@ -309,19 +272,19 @@ void SystemClock_Config(void)
 //APP ---------------------------------------------------------------------------------------------
 //wykonuje wybrane zadanie z menu glownego
 void app_do_action(){
-	switch(menu_main_curr_opt){
-	case menu_main_play: //wybrano odtwarzanie audio
-		app_state = menu_audio_play;
+	switch(menu_curr_opt){
+	case play_audio: //wybrano odtwarzanie audio
+		app_state = state_audio_play;
 		BSP_LCD_GLASS_Clear();
 		sprintf(audio_volume_chr,"%d", audio_volume);
 		BSP_LCD_GLASS_DisplayString(audio_volume_chr); //wyswietl akutalny poziom glosnosci
 		audio_play();									//graj audio
-		app_state = menu_main;							//wroc do menu
-		BSP_LCD_GLASS_DisplayString(menu_main_opts[menu_main_curr_opt]);//zaktualizuj etykiete
+		app_state = state_menu;							//wroc do menu
+		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
 		break;
 
 	default:
-		app_state = menu_main;
+		app_state = state_menu;
 		break;
 	}
 }
@@ -373,7 +336,7 @@ void qspi_test(){
 //odtwarza audio w petli dopoki nie wykryto akcji powrotu
 void audio_play(){
 	audio_codec_resume();
-	while(app_state != menu_leave){
+	while(app_state != state_menu_leave){
 			while (UpdatePointer == -1)
 				;
 			//
@@ -456,6 +419,54 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
   UpdatePointer = 0;
 }
 //AUDIO_END -----------------------------------------------------------------------------------------
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == joy_center_Pin){
+		if(app_state == state_menu){	//wejsc do menu
+			app_state = state_menu_enter;
+		}
+		else						//wyjdz z menu
+		{
+			app_state = state_menu_leave;
+		}
+	}
+
+	if (GPIO_Pin == joy_down_Pin) {
+		if (app_state == state_menu) { //zmien etykiete o jedna w dol
+			BSP_LCD_GLASS_Clear();
+			if (menu_curr_opt == 0)
+				menu_curr_opt = MENU_MAIN_OPTS_SIZE;
+			menu_curr_opt = (menu_curr_opt - 1) % MENU_MAIN_OPTS_SIZE;
+			BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+
+		}
+		if (app_state == state_audio_play) { //scisz o 10 procent
+			audio_volume -= 10;
+			if (audio_volume < 0)
+				audio_volume = 0;
+			sprintf(audio_volume_chr, "%d", audio_volume);
+			BSP_LCD_GLASS_DisplayString(audio_volume_chr);
+			audio_codec_update_volume();
+		}
+	}
+
+	if(GPIO_Pin == joy_up_Pin){
+		if(app_state == state_menu){ //zmien etykiete o jedna w gore
+			BSP_LCD_GLASS_Clear();
+			menu_curr_opt = (menu_curr_opt + 1) % MENU_MAIN_OPTS_SIZE;
+			BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+		}
+		if(app_state == state_audio_play){ //podglos o 10 procent
+			audio_volume += 10;
+			if(audio_volume > 90)
+				audio_volume = 90;
+			sprintf(audio_volume_chr,"%d",audio_volume);
+			BSP_LCD_GLASS_DisplayString(audio_volume_chr);
+			audio_codec_update_volume();
+		}
+	}
+
+}
+
 /* USER CODE END 4 */
 
 /**
