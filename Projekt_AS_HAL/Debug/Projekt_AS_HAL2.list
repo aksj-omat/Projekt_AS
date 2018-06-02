@@ -21,21 +21,21 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
   8 .ARM.attributes 00000030  00000000  00000000  00020040  2**0
                   CONTENTS, READONLY
-  9 .debug_info   0001e359  00000000  00000000  00020070  2**0
+  9 .debug_info   0001e34f  00000000  00000000  00020070  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_abbrev 00003815  00000000  00000000  0003e3c9  2**0
+ 10 .debug_abbrev 00003815  00000000  00000000  0003e3bf  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_aranges 000010a0  00000000  00000000  00041be0  2**3
+ 11 .debug_aranges 000010a0  00000000  00000000  00041bd8  2**3
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000f30  00000000  00000000  00042c80  2**3
+ 12 .debug_ranges 00000f30  00000000  00000000  00042c78  2**3
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_line   0000865d  00000000  00000000  00043bb0  2**0
+ 13 .debug_line   00008653  00000000  00000000  00043ba8  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_str    00004fb4  00000000  00000000  0004c20d  2**0
+ 14 .debug_str    00004faa  00000000  00000000  0004c1fb  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .comment      0000007c  00000000  00000000  000511c1  2**0
+ 15 .comment      0000007c  00000000  00000000  000511a5  2**0
                   CONTENTS, READONLY
- 16 .debug_frame  000041e8  00000000  00000000  00051240  2**2
+ 16 .debug_frame  000041e8  00000000  00000000  00051224  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -19727,8 +19727,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
  8007336:	4b1c      	ldr	r3, [pc, #112]	; (80073a8 <MX_GPIO_Init+0xc4>)
  8007338:	613b      	str	r3, [r7, #16]
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
- 800733a:	2300      	movs	r3, #0
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+ 800733a:	2302      	movs	r3, #2
  800733c:	617b      	str	r3, [r7, #20]
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
  800733e:	f107 030c 	add.w	r3, r7, #12
@@ -20005,9 +20005,9 @@ int main(void)
  80074c4:	f7ff ff0e 	bl	80072e4 <MX_GPIO_Init>
   MX_DMA_Init();
  80074c8:	f7ff feee 	bl	80072a8 <MX_DMA_Init>
+ // MX_LCD_Init();
   MX_SAI1_Init();
  80074cc:	f000 fab6 	bl	8007a3c <MX_SAI1_Init>
- // MX_LCD_Init();
   MX_QUADSPI_Init();
  80074d0:	f000 fa30 	bl	8007934 <MX_QUADSPI_Init>
   /* USER CODE BEGIN 2 */
@@ -20200,7 +20200,7 @@ void SystemClock_Config(void)
  8007610:	d003      	beq.n	800761a <SystemClock_Config+0x66>
   {
     _Error_Handler(__FILE__, __LINE__);
- 8007612:	21ec      	movs	r1, #236	; 0xec
+ 8007612:	21eb      	movs	r1, #235	; 0xeb
  8007614:	4832      	ldr	r0, [pc, #200]	; (80076e0 <SystemClock_Config+0x12c>)
  8007616:	f000 f987 	bl	8007928 <_Error_Handler>
   }
@@ -20234,7 +20234,7 @@ void SystemClock_Config(void)
  8007648:	d003      	beq.n	8007652 <SystemClock_Config+0x9e>
   {
     _Error_Handler(__FILE__, __LINE__);
- 800764a:	21fa      	movs	r1, #250	; 0xfa
+ 800764a:	21f9      	movs	r1, #249	; 0xf9
  800764c:	4824      	ldr	r0, [pc, #144]	; (80076e0 <SystemClock_Config+0x12c>)
  800764e:	f000 f96b 	bl	8007928 <_Error_Handler>
   }
@@ -20278,7 +20278,7 @@ void SystemClock_Config(void)
  800768e:	d004      	beq.n	800769a <SystemClock_Config+0xe6>
   {
     _Error_Handler(__FILE__, __LINE__);
- 8007690:	f240 1109 	movw	r1, #265	; 0x109
+ 8007690:	f44f 7184 	mov.w	r1, #264	; 0x108
  8007694:	4812      	ldr	r0, [pc, #72]	; (80076e0 <SystemClock_Config+0x12c>)
  8007696:	f000 f947 	bl	8007928 <_Error_Handler>
   }
@@ -20293,7 +20293,7 @@ void SystemClock_Config(void)
  80076a6:	d004      	beq.n	80076b2 <SystemClock_Config+0xfe>
   {
     _Error_Handler(__FILE__, __LINE__);
- 80076a8:	f44f 7188 	mov.w	r1, #272	; 0x110
+ 80076a8:	f240 110f 	movw	r1, #271	; 0x10f
  80076ac:	480c      	ldr	r0, [pc, #48]	; (80076e0 <SystemClock_Config+0x12c>)
  80076ae:	f000 f93b 	bl	8007928 <_Error_Handler>
   }
@@ -20535,7 +20535,7 @@ void codec_init(){
  8007842:	2be0      	cmp	r3, #224	; 0xe0
  8007844:	d004      	beq.n	8007850 <codec_init+0x1c>
 			Error_Handler();
- 8007846:	f240 114d 	movw	r1, #333	; 0x14d
+ 8007846:	f44f 71a6 	mov.w	r1, #332	; 0x14c
  800784a:	4810      	ldr	r0, [pc, #64]	; (800788c <codec_init+0x58>)
  800784c:	f000 f86c 	bl	8007928 <_Error_Handler>
 		}
@@ -20563,7 +20563,7 @@ void codec_init(){
  8007874:	2b00      	cmp	r3, #0
  8007876:	d004      	beq.n	8007882 <codec_init+0x4e>
 			Error_Handler();
- 8007878:	f240 1153 	movw	r1, #339	; 0x153
+ 8007878:	f44f 71a9 	mov.w	r1, #338	; 0x152
  800787c:	4803      	ldr	r0, [pc, #12]	; (800788c <codec_init+0x58>)
  800787e:	f000 f853 	bl	8007928 <_Error_Handler>
 		}
@@ -20593,7 +20593,7 @@ void codec_start(){
  80078aa:	d004      	beq.n	80078b6 <codec_start+0x22>
 	  {
 	    Error_Handler();
- 80078ac:	f44f 71ad 	mov.w	r1, #346	; 0x15a
+ 80078ac:	f240 1159 	movw	r1, #345	; 0x159
  80078b0:	480a      	ldr	r0, [pc, #40]	; (80078dc <codec_start+0x48>)
  80078b2:	f000 f839 	bl	8007928 <_Error_Handler>
 	  }
@@ -20607,7 +20607,7 @@ void codec_start(){
  80078c6:	d004      	beq.n	80078d2 <codec_start+0x3e>
 	  {
 	    Error_Handler();
- 80078c8:	f44f 71af 	mov.w	r1, #350	; 0x15e
+ 80078c8:	f240 115d 	movw	r1, #349	; 0x15d
  80078cc:	4803      	ldr	r0, [pc, #12]	; (80078dc <codec_start+0x48>)
  80078ce:	f000 f82b 	bl	8007928 <_Error_Handler>
 	  }

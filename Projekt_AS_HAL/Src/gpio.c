@@ -72,7 +72,7 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = joy_center_Pin|joy_left_Pin|joy_right_Pin|joy_up_Pin 
                           |joy_down_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/

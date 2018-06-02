@@ -153,8 +153,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_SAI1_Init();
  // MX_LCD_Init();
+  MX_SAI1_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
@@ -204,7 +204,6 @@ int main(void)
   /* USER CODE END 3 */
 
 }
-
 
 /**
   * @brief System Clock Configuration
