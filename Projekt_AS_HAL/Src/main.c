@@ -39,6 +39,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32l4xx_hal.h"
+#include "dfsdm.h"
 #include "dma.h"
 #include "lcd.h"
 #include "quadspi.h"
@@ -78,6 +79,14 @@ char audio_volume_chr[2];	//audio jako string
 uint16_t                     PlayBuff[PLAY_BUFF_SIZE];
 __IO int16_t                 UpdatePointer = -1;
 uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
+//RECORD
+DFSDM_Channel_HandleTypeDef  DfsdmChannelHandle;
+DFSDM_Filter_HandleTypeDef   DfsdmFilterHandle;
+int32_t                      RecBuff[2048];
+
+uint32_t                     DmaRecHalfBuffCplt  = 0;
+uint32_t                     DmaRecBuffCplt      = 0;
+uint32_t                     PlaybackStarted         = 0;
 //QSPI ----------------------------------------------------------------------------
 #define BUFFER_SIZE         ((uint32_t)0x0200)
 #define WRITE_READ_ADDR     ((uint32_t)0x0050)
@@ -160,9 +169,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
- // MX_LCD_Init();
+  //MX_LCD_Init();
   MX_SAI1_Init();
   MX_QUADSPI_Init();
+  MX_DFSDM1_Init();
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
   //qspi_test();
@@ -172,6 +182,12 @@ int main(void)
   BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--",1,SCROLL_SPEED_HIGH);
   BSP_LCD_GLASS_Clear();
   BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+
+  if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&DfsdmFilterHandle, RecBuff, 2048))
+   {
+     Error_Handler();
+   }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -181,6 +197,40 @@ int main(void)
 	  if(app_state == state_menu_enter){ //wykryto wybor podmenu
 		  app_do_action();
 	  }
+
+	  if(DmaRecHalfBuffCplt == 1)
+	      {
+	        /* Store values on Play buff */
+	        for(int i = 0; i < 1024; i++)
+	        {
+	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
+	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
+	        }
+	        if(PlaybackStarted == 0)
+	        {
+	          if(0 != audio_drv->Play(AUDIO_I2C_ADDRESS, (uint16_t *) &PlayBuff[0], 4096))
+	          {
+	            Error_Handler();
+	          }
+	          if(HAL_OK != HAL_SAI_Transmit_DMA(&SaiHandle, (uint8_t *) &PlayBuff[0], 4096))
+	          {
+	            Error_Handler();
+	          }
+	          PlaybackStarted = 1;
+	        }
+	        DmaRecHalfBuffCplt  = 0;
+	      }
+	      if(DmaRecBuffCplt == 1)
+	      {
+	        /* Store values on Play buff */
+	        for(i = 1024; i < 2048; i++)
+	        {
+	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
+	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
+	        }
+	        DmaRecBuffCplt  = 0;
+	      }
+	    }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -234,8 +284,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1
+                              |RCC_PERIPHCLK_DFSDM1;
   PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
+  PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
