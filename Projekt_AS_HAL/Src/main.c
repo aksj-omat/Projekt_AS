@@ -179,7 +179,7 @@ int main(void)
   audio_codec_init();
   audio_buffer_init();
 
-  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--",1,SCROLL_SPEED_HIGH);
+  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--AUTORZY--ANGELIKA KOPACZEWSKA--JAKUB SOBOCKI--",1,SCROLL_SPEED_HIGH);
   BSP_LCD_GLASS_Clear();
   BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
 
