@@ -79,7 +79,7 @@ char audio_volume_chr[2];	//audio jako string
 uint16_t                     PlayBuff[PLAY_BUFF_SIZE];
 __IO int16_t                 UpdatePointer = -1;
 uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
-//RECORD
+//RECORD --------------------------------------------------------------------------
 DFSDM_Channel_HandleTypeDef  DfsdmChannelHandle;
 DFSDM_Filter_HandleTypeDef   DfsdmFilterHandle;
 int32_t                      RecBuff[2048];
@@ -87,12 +87,15 @@ int32_t                      RecBuff[2048];
 uint32_t                     DmaRecHalfBuffCplt  = 0;
 uint32_t                     DmaRecBuffCplt      = 0;
 uint32_t                     PlaybackStarted         = 0;
+#define SaturaLH(N, L, H) (((N)<(L))?(L):(((N)>(H))?(H):(N)))
 //QSPI ----------------------------------------------------------------------------
 #define BUFFER_SIZE         ((uint32_t)0x0200)
 #define WRITE_READ_ADDR     ((uint32_t)0x0050)
 #define QSPI_BASE_ADDR      ((uint32_t)0x90000000)
 uint8_t qspi_aTxBuffer[BUFFER_SIZE];
 uint8_t qspi_aRxBuffer[BUFFER_SIZE];
+//SAI -----------------------------------------------------------------------------
+SAI_HandleTypeDef            SaiHandle;
 //APP -----------------------------------------------------------------------------
 
 #define MENU_MAIN_OPTS_SIZE 2
@@ -223,19 +226,20 @@ int main(void)
 	      if(DmaRecBuffCplt == 1)
 	      {
 	        /* Store values on Play buff */
-	        for(i = 1024; i < 2048; i++)
+	        for(int i = 1024; i < 2048; i++)
 	        {
 	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
 	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
 	        }
 	        DmaRecBuffCplt  = 0;
 	      }
-	    }
+  }
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
-  }
+
   /* USER CODE END 3 */
 
 }
