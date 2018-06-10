@@ -95,7 +95,7 @@ uint32_t                     PlaybackStarted         = 0;
 uint8_t qspi_aTxBuffer[BUFFER_SIZE];
 uint8_t qspi_aRxBuffer[BUFFER_SIZE];
 //SAI -----------------------------------------------------------------------------
-SAI_HandleTypeDef            SaiHandle;
+//SAI_HandleTypeDef            SaiHandle;
 //APP -----------------------------------------------------------------------------
 
 #define MENU_MAIN_OPTS_SIZE 2
@@ -117,7 +117,6 @@ typedef enum{
 char* menu_opts[] = {"Play", "Rec"};
 App_states app_state = state_menu;
 App_menu_opts menu_curr_opt = play_audio;
-App_menu_opts menu_curr_opt2 = record_audio;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -316,7 +315,7 @@ void app_do_action(){
 		BSP_LCD_GLASS_Clear();
 		record_begin();
 		app_state = state_menu;
-		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt2]);//zaktualizuj etykiete
+		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
 		break;
 
 	default:
@@ -448,6 +447,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 {
 
   UpdatePointer = PLAY_BUFF_SIZE/2;
+  DmaRecBuffCplt = PLAY_BUFF_SIZE/2;
 }
 
 
@@ -455,11 +455,13 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 {
 
   UpdatePointer = 0;
+  DmaRecBuffCplt = 0;
 }
 //AUDIO_END -----------------------------------------------------------------------------------------
 //RECORD_BEGIN --------------------------------------------------------------------------------------
 void record_begin()
 {
+	while(app_state != state_menu_leave){
 	  if(DmaRecHalfBuffCplt == 1)
 	      {
 	        /* Store values on Play buff */
@@ -468,18 +470,8 @@ void record_begin()
 	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
 	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
 	        }
-	        if(PlaybackStarted == 0)
-	        {
-	          if(0 != audio_drv->Play(AUDIO_I2C_ADDRESS, (uint16_t *) &PlayBuff[0], 4096))
-	          {
-	            Error_Handler();
-	          }
-	          if(HAL_OK != HAL_SAI_Transmit_DMA(&SaiHandle, (uint8_t *) &PlayBuff[0], 4096))
-	          {
-	            Error_Handler();
-	          }
-	          PlaybackStarted = 1;
-	        }
+
+
 	        DmaRecHalfBuffCplt  = 0;
 	      }
 	      if(DmaRecBuffCplt == 1)
@@ -493,6 +485,9 @@ void record_begin()
 	        DmaRecBuffCplt  = 0;
 	      }
 }
+}
+
+
 
 //RECORD_END ------------------------------------------------------------------------------------------
 
