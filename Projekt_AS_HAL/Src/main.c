@@ -105,7 +105,8 @@ typedef enum{
 	state_menu,			//w glownym menu
 	state_audio_play,	//w menu odtwarzania dzwieku/odtwarzanie dzwieku
 	state_menu_enter,	//wykonano akcje wejscia do podmenu
-	state_menu_leave	//wykonano akcje powrotu do menu glownego
+	state_menu_leave,	//wykonano akcje powrotu do menu glownego
+	state_audio_record 		//nagrywanie dŸwiêku
 }App_states;
 //opcje dostepne w main menu, indeks odpowiada wyswietlanemu napisowi na LCD (patrz tablica menu_opts)
 typedef enum{
@@ -116,6 +117,7 @@ typedef enum{
 char* menu_opts[] = {"Play", "Rec"};
 App_states app_state = state_menu;
 App_menu_opts menu_curr_opt = play_audio;
+App_menu_opts menu_curr_opt2 = record_audio;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -130,6 +132,8 @@ static void audio_codec_pause();		//pauzuje odtwarzanie dzwieku
 static void audio_codec_update_volume();//aktualizuje dzwiek wartoscia zmiennej audio_volume
 static void audio_buffer_init();		//inicializuje bufor audio
 static void audio_play();				//wznawia codec, uruchamia odtwarzanie dzieku, pauzuje przy wyjsciu
+//RECORD ------------------------------------------------------------------------------------------------------
+static void record_begin();
 //QSPI --------------------------------------------------------------------------------------------------------
 static void qspi_test();				//test poprawnosci dzialania qspi
 static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset); //napelnia bufor
@@ -201,38 +205,7 @@ int main(void)
 		  app_do_action();
 	  }
 
-	  if(DmaRecHalfBuffCplt == 1)
-	      {
-	        /* Store values on Play buff */
-	        for(int i = 0; i < 1024; i++)
-	        {
-	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
-	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
-	        }
-	        if(PlaybackStarted == 0)
-	        {
-	          if(0 != audio_drv->Play(AUDIO_I2C_ADDRESS, (uint16_t *) &PlayBuff[0], 4096))
-	          {
-	            Error_Handler();
-	          }
-	          if(HAL_OK != HAL_SAI_Transmit_DMA(&SaiHandle, (uint8_t *) &PlayBuff[0], 4096))
-	          {
-	            Error_Handler();
-	          }
-	          PlaybackStarted = 1;
-	        }
-	        DmaRecHalfBuffCplt  = 0;
-	      }
-	      if(DmaRecBuffCplt == 1)
-	      {
-	        /* Store values on Play buff */
-	        for(int i = 1024; i < 2048; i++)
-	        {
-	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
-	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
-	        }
-	        DmaRecBuffCplt  = 0;
-	      }
+
   }
 
   /* USER CODE END WHILE */
@@ -338,6 +311,13 @@ void app_do_action(){
 		app_state = state_menu;							//wroc do menu
 		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
 		break;
+	case record_audio: //wybrano nagrywanie
+		app_state = state_audio_record;
+		BSP_LCD_GLASS_Clear();
+		record_begin();
+		app_state = state_menu;
+		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt2]);//zaktualizuj etykiete
+		break;
 
 	default:
 		app_state = state_menu;
@@ -419,6 +399,8 @@ void audio_play(){
 	audio_codec_pause();
 
 }
+
+
 //pauzuje odtwarzanie audio
 void audio_codec_pause(){
 	audio_drv->Pause(AUDIO_I2C_ADDRESS);
@@ -475,6 +457,45 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
   UpdatePointer = 0;
 }
 //AUDIO_END -----------------------------------------------------------------------------------------
+//RECORD_BEGIN --------------------------------------------------------------------------------------
+void record_begin()
+{
+	  if(DmaRecHalfBuffCplt == 1)
+	      {
+	        /* Store values on Play buff */
+	        for(int i = 0; i < 1024; i++)
+	        {
+	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
+	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
+	        }
+	        if(PlaybackStarted == 0)
+	        {
+	          if(0 != audio_drv->Play(AUDIO_I2C_ADDRESS, (uint16_t *) &PlayBuff[0], 4096))
+	          {
+	            Error_Handler();
+	          }
+	          if(HAL_OK != HAL_SAI_Transmit_DMA(&SaiHandle, (uint8_t *) &PlayBuff[0], 4096))
+	          {
+	            Error_Handler();
+	          }
+	          PlaybackStarted = 1;
+	        }
+	        DmaRecHalfBuffCplt  = 0;
+	      }
+	      if(DmaRecBuffCplt == 1)
+	      {
+	        /* Store values on Play buff */
+	        for(int i = 1024; i < 2048; i++)
+	        {
+	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
+	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
+	        }
+	        DmaRecBuffCplt  = 0;
+	      }
+}
+
+//RECORD_END ------------------------------------------------------------------------------------------
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == joy_center_Pin){
 		if(app_state == state_menu){	//wejsc do menu
