@@ -80,8 +80,8 @@ uint16_t                     PlayBuff[PLAY_BUFF_SIZE];
 __IO int16_t                 UpdatePointer = -1;
 uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
 //RECORD --------------------------------------------------------------------------
-DFSDM_Channel_HandleTypeDef  DfsdmChannelHandle;
-DFSDM_Filter_HandleTypeDef   DfsdmFilterHandle;
+DFSDM_Channel_HandleTypeDef  hdfsdm1_channel2;
+DFSDM_Filter_HandleTypeDef   hdfsdm1_filter0;
 int32_t                      RecBuff[2048];
 
 uint32_t                     DmaRecHalfBuffCplt  = 0;
