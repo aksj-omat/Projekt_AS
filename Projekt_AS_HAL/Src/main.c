@@ -189,7 +189,7 @@ int main(void)
   BSP_LCD_GLASS_Clear();
   BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
 
-  if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&DfsdmFilterHandle, RecBuff, 2048))
+  if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, RecBuff, 2048))
    {
      Error_Handler();
    }
@@ -447,7 +447,6 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 {
 
   UpdatePointer = PLAY_BUFF_SIZE/2;
-  DmaRecBuffCplt = PLAY_BUFF_SIZE/2;
 }
 
 
@@ -455,7 +454,6 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 {
 
   UpdatePointer = 0;
-  DmaRecBuffCplt = 0;
 }
 //AUDIO_END -----------------------------------------------------------------------------------------
 //RECORD_BEGIN --------------------------------------------------------------------------------------
@@ -487,6 +485,15 @@ void record_begin()
 }
 }
 
+void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
+{
+  DmaRecHalfBuffCplt = 1;
+}
+
+void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
+{
+  DmaRecBuffCplt = 1;
+}
 
 
 //RECORD_END ------------------------------------------------------------------------------------------
