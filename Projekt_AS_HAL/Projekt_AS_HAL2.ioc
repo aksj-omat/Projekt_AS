@@ -1,8 +1,18 @@
 #MicroXplorer Configuration settings - do not modify
 DFSDM1.Filter_injChannel2_FIL0=DFSDM_CHANNEL_2
 DFSDM1.IPParameters=Filter_injChannel2_FIL0
+Dma.DFSDM1_FLT0.1.Direction=DMA_PERIPH_TO_MEMORY
+Dma.DFSDM1_FLT0.1.Instance=DMA1_Channel4
+Dma.DFSDM1_FLT0.1.MemDataAlignment=DMA_MDATAALIGN_WORD
+Dma.DFSDM1_FLT0.1.MemInc=DMA_MINC_ENABLE
+Dma.DFSDM1_FLT0.1.Mode=DMA_CIRCULAR
+Dma.DFSDM1_FLT0.1.PeriphDataAlignment=DMA_PDATAALIGN_WORD
+Dma.DFSDM1_FLT0.1.PeriphInc=DMA_PINC_DISABLE
+Dma.DFSDM1_FLT0.1.Priority=DMA_PRIORITY_HIGH
+Dma.DFSDM1_FLT0.1.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority
 Dma.Request0=SAI1_A
-Dma.RequestsNb=1
+Dma.Request1=DFSDM1_FLT0
+Dma.RequestsNb=2
 Dma.SAI1_A.0.Direction=DMA_MEMORY_TO_PERIPH
 Dma.SAI1_A.0.Instance=DMA2_Channel1
 Dma.SAI1_A.0.MemDataAlignment=DMA_MDATAALIGN_HALFWORD
@@ -52,6 +62,7 @@ Mcu.UserName=STM32L476VGTx
 MxCube.Version=4.25.0
 MxDb.Version=DB.4.0.250
 NVIC.BusFault_IRQn=true\:0\:0\:false\:false\:true\:false
+NVIC.DMA1_Channel4_IRQn=true\:0\:0\:false\:false\:true\:false
 NVIC.DMA2_Channel1_IRQn=true\:0\:0\:false\:false\:true\:false
 NVIC.DebugMonitor_IRQn=true\:0\:0\:false\:false\:true\:false
 NVIC.EXTI0_IRQn=true\:0\:0\:false\:false\:true\:true
