@@ -39,6 +39,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32l4xx_hal.h"
+#include "dfsdm.h"
 #include "dma.h"
 #include "lcd.h"
 #include "quadspi.h"
@@ -78,12 +79,23 @@ char audio_volume_chr[2];	//audio jako string
 uint16_t                     PlayBuff[PLAY_BUFF_SIZE];
 __IO int16_t                 UpdatePointer = -1;
 uint32_t PlaybackPosition   = PLAY_BUFF_SIZE + PLAY_HEADER;
+//RECORD --------------------------------------------------------------------------
+DFSDM_Channel_HandleTypeDef  hdfsdm1_channel2;
+DFSDM_Filter_HandleTypeDef   hdfsdm1_filter0;
+int32_t                      RecBuff[2048];
+
+uint32_t                     DmaRecHalfBuffCplt  = 0;
+uint32_t                     DmaRecBuffCplt      = 0;
+uint32_t                     PlaybackStarted         = 0;
+#define SaturaLH(N, L, H) (((N)<(L))?(L):(((N)>(H))?(H):(N)))
 //QSPI ----------------------------------------------------------------------------
 #define BUFFER_SIZE         ((uint32_t)0x0200)
 #define WRITE_READ_ADDR     ((uint32_t)0x0050)
 #define QSPI_BASE_ADDR      ((uint32_t)0x90000000)
 uint8_t qspi_aTxBuffer[BUFFER_SIZE];
 uint8_t qspi_aRxBuffer[BUFFER_SIZE];
+//SAI -----------------------------------------------------------------------------
+//SAI_HandleTypeDef            SaiHandle;
 //APP -----------------------------------------------------------------------------
 
 #define MENU_MAIN_OPTS_SIZE 2
@@ -93,7 +105,8 @@ typedef enum{
 	state_menu,			//w glownym menu
 	state_audio_play,	//w menu odtwarzania dzwieku/odtwarzanie dzwieku
 	state_menu_enter,	//wykonano akcje wejscia do podmenu
-	state_menu_leave	//wykonano akcje powrotu do menu glownego
+	state_menu_leave,	//wykonano akcje powrotu do menu glownego
+	state_audio_record 		//nagrywanie dŸwiêku
 }App_states;
 //opcje dostepne w main menu, indeks odpowiada wyswietlanemu napisowi na LCD (patrz tablica menu_opts)
 typedef enum{
@@ -118,6 +131,8 @@ static void audio_codec_pause();		//pauzuje odtwarzanie dzwieku
 static void audio_codec_update_volume();//aktualizuje dzwiek wartoscia zmiennej audio_volume
 static void audio_buffer_init();		//inicializuje bufor audio
 static void audio_play();				//wznawia codec, uruchamia odtwarzanie dzieku, pauzuje przy wyjsciu
+//RECORD ------------------------------------------------------------------------------------------------------
+static void record_begin();
 //QSPI --------------------------------------------------------------------------------------------------------
 static void qspi_test();				//test poprawnosci dzialania qspi
 static void     Fill_Buffer (uint8_t *pBuffer, uint32_t uwBufferLength, uint32_t uwOffset); //napelnia bufor
@@ -160,18 +175,25 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
- // MX_LCD_Init();
+  MX_LCD_Init();
   MX_SAI1_Init();
   MX_QUADSPI_Init();
+  MX_DFSDM1_Init();
   /* USER CODE BEGIN 2 */
   BSP_LCD_GLASS_Init();
   //qspi_test();
   audio_codec_init();
   audio_buffer_init();
 
-  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--",1,SCROLL_SPEED_HIGH);
+  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--AUTORZY--ANGELIKA KOPACZEWSKA--JAKUB SOBOCKI--",1,SCROLL_SPEED_HIGH);
   BSP_LCD_GLASS_Clear();
   BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+
+  if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, RecBuff, 2048))
+   {
+     Error_Handler();
+   }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -181,11 +203,15 @@ int main(void)
 	  if(app_state == state_menu_enter){ //wykryto wybor podmenu
 		  app_do_action();
 	  }
+
+
+  }
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
-  }
+
   /* USER CODE END 3 */
 
 }
@@ -211,7 +237,6 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
   RCC_OscInitStruct.PLL.PLLN = 40;
-  RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -234,8 +259,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1
+                              |RCC_PERIPHCLK_DFSDM1;
   PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
+  PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
@@ -280,6 +307,13 @@ void app_do_action(){
 		BSP_LCD_GLASS_DisplayString(audio_volume_chr); //wyswietl akutalny poziom glosnosci
 		audio_play();									//graj audio
 		app_state = state_menu;							//wroc do menu
+		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
+		break;
+	case record_audio: //wybrano nagrywanie
+		app_state = state_audio_record;
+		BSP_LCD_GLASS_Clear();
+		record_begin();
+		app_state = state_menu;
 		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
 		break;
 
@@ -363,6 +397,8 @@ void audio_play(){
 	audio_codec_pause();
 
 }
+
+
 //pauzuje odtwarzanie audio
 void audio_codec_pause(){
 	audio_drv->Pause(AUDIO_I2C_ADDRESS);
@@ -419,6 +455,48 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
   UpdatePointer = 0;
 }
 //AUDIO_END -----------------------------------------------------------------------------------------
+//RECORD_BEGIN --------------------------------------------------------------------------------------
+void record_begin()
+{
+	while(app_state != state_menu_leave){
+	  if(DmaRecHalfBuffCplt == 1)
+	      {
+	        /* Store values on Play buff */
+	        for(int i = 0; i < 1024; i++)
+	        {
+	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
+	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
+	        }
+
+
+	        DmaRecHalfBuffCplt  = 0;
+	      }
+	      if(DmaRecBuffCplt == 1)
+	      {
+	        /* Store values on Play buff */
+	        for(int i = 1024; i < 2048; i++)
+	        {
+	          PlayBuff[2*i]     = SaturaLH((RecBuff[i] >> 8), -32768, 32767);
+	          PlayBuff[(2*i)+1] = PlayBuff[2*i];
+	        }
+	        DmaRecBuffCplt  = 0;
+	      }
+}
+}
+
+void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
+{
+  DmaRecHalfBuffCplt = 1;
+}
+
+void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
+{
+  DmaRecBuffCplt = 1;
+}
+
+
+//RECORD_END ------------------------------------------------------------------------------------------
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == joy_center_Pin){
 		if(app_state == state_menu){	//wejsc do menu
