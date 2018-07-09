@@ -7,17 +7,17 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         000078a4  08000190  08000190  00010190  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000148  08007a34  08007a34  00017a34  2**2
+  2 .rodata       0000013c  08007a34  08007a34  00017a34  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .init_array   00000004  08007b7c  08007b7c  00017b7c  2**2
+  3 .init_array   00000004  08007b70  08007b70  00017b70  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  4 .fini_array   00000004  08007b80  08007b80  00017b80  2**2
+  4 .fini_array   00000004  08007b74  08007b74  00017b74  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  5 .data         000000b0  20000000  08007b84  00020000  2**2
+  5 .data         000000b0  20000000  08007b78  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .bss          000025ec  200000b0  08007c34  000200b0  2**2
+  6 .bss          000025ec  200000b0  08007c28  000200b0  2**2
                   ALLOC
-  7 ._user_heap_stack 00000600  2000269c  08007c34  0002269c  2**0
+  7 ._user_heap_stack 00000600  2000269c  08007c28  0002269c  2**0
                   ALLOC
   8 .ARM.attributes 00000030  00000000  00000000  000200b0  2**0
                   CONTENTS, READONLY
@@ -31,11 +31,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  13 .debug_line   000080fd  00000000  00000000  000421d0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_str    00004e7d  00000000  00000000  0004a2cd  2**0
+ 14 .debug_str    00004e89  00000000  00000000  0004a2cd  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .comment      0000007c  00000000  00000000  0004f14a  2**0
+ 15 .comment      0000007c  00000000  00000000  0004f156  2**0
                   CONTENTS, READONLY
- 16 .debug_frame  00004338  00000000  00000000  0004f1c8  2**2
+ 16 .debug_frame  00004338  00000000  00000000  0004f1d4  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -2793,8 +2793,8 @@ static void Convert(uint8_t *Char, Point_Typedef Point, DoublePoint_Typedef Colo
  800125c:	46bd      	mov	sp, r7
  800125e:	f85d 7b04 	ldr.w	r7, [sp], #4
  8001262:	4770      	bx	lr
- 8001264:	08007aec 	.word	0x08007aec
- 8001268:	08007ab8 	.word	0x08007ab8
+ 8001264:	08007ae0 	.word	0x08007ae0
+ 8001268:	08007aac 	.word	0x08007aac
  800126c:	20000130 	.word	0x20000130
 
 08001270 <WriteChar>:
@@ -10732,7 +10732,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
  8003fc0:	2303      	movs	r3, #3
  8003fc2:	e20b      	b.n	80043dc <HAL_RCC_OscConfig+0x6b8>
  8003fc4:	40021000 	.word	0x40021000
- 8003fc8:	08007b00 	.word	0x08007b00
+ 8003fc8:	08007af4 	.word	0x08007af4
  8003fcc:	20000048 	.word	0x20000048
         while(READ_BIT(RCC->CR, RCC_CR_HSERDY) != RESET)
  8003fd0:	4ba9      	ldr	r3, [pc, #676]	; (8004278 <HAL_RCC_OscConfig+0x554>)
@@ -11858,7 +11858,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  8004606:	bd80      	pop	{r7, pc}
  8004608:	40022000 	.word	0x40022000
  800460c:	40021000 	.word	0x40021000
- 8004610:	08007b00 	.word	0x08007b00
+ 8004610:	08007af4 	.word	0x08007af4
  8004614:	20000048 	.word	0x20000048
 
 08004618 <HAL_RCC_GetSysClockFreq>:
@@ -12081,7 +12081,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8004764:	4770      	bx	lr
  8004766:	bf00      	nop
  8004768:	40021000 	.word	0x40021000
- 800476c:	08007b18 	.word	0x08007b18
+ 800476c:	08007b0c 	.word	0x08007b0c
  8004770:	00f42400 	.word	0x00f42400
  8004774:	007a1200 	.word	0x007a1200
 
@@ -12129,7 +12129,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  80047ac:	4618      	mov	r0, r3
  80047ae:	bd80      	pop	{r7, pc}
  80047b0:	40021000 	.word	0x40021000
- 80047b4:	08007b10 	.word	0x08007b10
+ 80047b4:	08007b04 	.word	0x08007b04
 
 080047b8 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -12155,7 +12155,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  80047d4:	4618      	mov	r0, r3
  80047d6:	bd80      	pop	{r7, pc}
  80047d8:	40021000 	.word	0x40021000
- 80047dc:	08007b10 	.word	0x08007b10
+ 80047dc:	08007b04 	.word	0x08007b04
 
 080047e0 <RCC_SetFlashLatencyFromMSIRange>:
             voltage range.
@@ -13801,7 +13801,7 @@ uint32_t HAL_RCCEx_GetPeriphCLKFreq(uint32_t PeriphClk)
  800515a:	e36c      	b.n	8005836 <HAL_RCCEx_GetPeriphCLKFreq+0x9ca>
  800515c:	40021000 	.word	0x40021000
  8005160:	0003d090 	.word	0x0003d090
- 8005164:	08007b18 	.word	0x08007b18
+ 8005164:	08007b0c 	.word	0x08007b0c
  8005168:	00f42400 	.word	0x00f42400
  800516c:	007a1200 	.word	0x007a1200
  8005170:	001fff68 	.word	0x001fff68
@@ -14161,7 +14161,7 @@ uint32_t HAL_RCCEx_GetPeriphCLKFreq(uint32_t PeriphClk)
  8005420:	e20c      	b.n	800583c <HAL_RCCEx_GetPeriphCLKFreq+0x9d0>
  8005422:	bf00      	nop
  8005424:	40021000 	.word	0x40021000
- 8005428:	08007b18 	.word	0x08007b18
+ 8005428:	08007b0c 	.word	0x08007b0c
  800542c:	00f42400 	.word	0x00f42400
       else if(srcclk == RCC_UART4CLKSOURCE_SYSCLK)
  8005430:	69bb      	ldr	r3, [r7, #24]
@@ -17479,14 +17479,14 @@ int main(void)
   audio_buffer_init();
  8006738:	f000 f9ca 	bl	8006ad0 <audio_buffer_init>
 
-  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--          ",1,SCROLL_SPEED_HIGH);
+  BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--",1,SCROLL_SPEED_HIGH);
  800673c:	2296      	movs	r2, #150	; 0x96
  800673e:	2101      	movs	r1, #1
  8006740:	480a      	ldr	r0, [pc, #40]	; (800676c <main+0x58>)
  8006742:	f7fa fb55 	bl	8000df0 <BSP_LCD_GLASS_ScrollSentence>
   BSP_LCD_GLASS_Clear();
  8006746:	f7fa fb49 	bl	8000ddc <BSP_LCD_GLASS_Clear>
-  BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+  BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);
  800674a:	4b09      	ldr	r3, [pc, #36]	; (8006770 <main+0x5c>)
  800674c:	781b      	ldrb	r3, [r3, #0]
  800674e:	461a      	mov	r2, r3
@@ -17701,7 +17701,7 @@ void SystemClock_Config(void)
  80068a2:	46bd      	mov	sp, r7
  80068a4:	bd80      	pop	{r7, pc}
  80068a6:	bf00      	nop
- 80068a8:	08007a6c 	.word	0x08007a6c
+ 80068a8:	08007a60 	.word	0x08007a60
  80068ac:	10624dd3 	.word	0x10624dd3
 
 080068b0 <app_do_action>:
@@ -17740,7 +17740,7 @@ void app_do_action(){
  80068de:	4b0a      	ldr	r3, [pc, #40]	; (8006908 <app_do_action+0x58>)
  80068e0:	2200      	movs	r2, #0
  80068e2:	701a      	strb	r2, [r3, #0]
-		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
+		BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);//zaktualizuj etykiete
  80068e4:	4b07      	ldr	r3, [pc, #28]	; (8006904 <app_do_action+0x54>)
  80068e6:	781b      	ldrb	r3, [r3, #0]
  80068e8:	461a      	mov	r2, r3
@@ -17765,7 +17765,7 @@ void app_do_action(){
  8006904:	2000011e 	.word	0x2000011e
  8006908:	2000011d 	.word	0x2000011d
  800690c:	20000038 	.word	0x20000038
- 8006910:	08007a7c 	.word	0x08007a7c
+ 8006910:	08007a70 	.word	0x08007a70
  8006914:	20002584 	.word	0x20002584
  8006918:	20000040 	.word	0x20000040
 
@@ -17877,7 +17877,7 @@ void audio_play(){
  80069bc:	2000003a 	.word	0x2000003a
  80069c0:	2000003c 	.word	0x2000003c
  80069c4:	20000580 	.word	0x20000580
- 80069c8:	08007a6c 	.word	0x08007a6c
+ 80069c8:	08007a60 	.word	0x08007a60
  80069cc:	2000011d 	.word	0x2000011d
 
 080069d0 <audio_codec_pause>:
@@ -18004,7 +18004,7 @@ void audio_codec_init(){
  8006a98:	bd98      	pop	{r3, r4, r7, pc}
  8006a9a:	bf00      	nop
  8006a9c:	20000000 	.word	0x20000000
- 8006aa0:	08007a6c 	.word	0x08007a6c
+ 8006aa0:	08007a60 	.word	0x08007a60
  8006aa4:	20002580 	.word	0x20002580
  8006aa8:	20000038 	.word	0x20000038
  8006aac:	20000580 	.word	0x20000580
@@ -18077,7 +18077,7 @@ void audio_buffer_init(){
  8006b20:	46464952 	.word	0x46464952
  8006b24:	017efe24 	.word	0x017efe24
  8006b28:	08080000 	.word	0x08080000
- 8006b2c:	08007a6c 	.word	0x08007a6c
+ 8006b2c:	08007a60 	.word	0x08007a60
  8006b30:	0808002c 	.word	0x0808002c
  8006b34:	20000580 	.word	0x20000580
 
@@ -18188,7 +18188,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  8006bce:	b2da      	uxtb	r2, r3
  8006bd0:	4b30      	ldr	r3, [pc, #192]	; (8006c94 <HAL_GPIO_EXTI_Callback+0x11c>)
  8006bd2:	701a      	strb	r2, [r3, #0]
-			BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+			BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);
  8006bd4:	4b2f      	ldr	r3, [pc, #188]	; (8006c94 <HAL_GPIO_EXTI_Callback+0x11c>)
  8006bd6:	781b      	ldrb	r3, [r3, #0]
  8006bd8:	461a      	mov	r2, r3
@@ -18249,7 +18249,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  8006c34:	b2da      	uxtb	r2, r3
  8006c36:	4b17      	ldr	r3, [pc, #92]	; (8006c94 <HAL_GPIO_EXTI_Callback+0x11c>)
  8006c38:	701a      	strb	r2, [r3, #0]
-			BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+			BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);
  8006c3a:	4b16      	ldr	r3, [pc, #88]	; (8006c94 <HAL_GPIO_EXTI_Callback+0x11c>)
  8006c3c:	781b      	ldrb	r3, [r3, #0]
  8006c3e:	461a      	mov	r2, r3
@@ -18304,7 +18304,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  8006c94:	2000011e 	.word	0x2000011e
  8006c98:	20000040 	.word	0x20000040
  8006c9c:	20000038 	.word	0x20000038
- 8006ca0:	08007a7c 	.word	0x08007a7c
+ 8006ca0:	08007a70 	.word	0x08007a70
  8006ca4:	20002584 	.word	0x20002584
 
 08006ca8 <_Error_Handler>:
@@ -18381,7 +18381,7 @@ void MX_QUADSPI_Init(void)
  8006cfa:	bf00      	nop
  8006cfc:	20002588 	.word	0x20002588
  8006d00:	a0001000 	.word	0xa0001000
- 8006d04:	08007a94 	.word	0x08007a94
+ 8006d04:	08007a88 	.word	0x08007a88
 
 08006d08 <HAL_QSPI_MspInit>:
 
@@ -18588,7 +18588,7 @@ void MX_SAI1_Init(void)
  8006e26:	bd80      	pop	{r7, pc}
  8006e28:	20002614 	.word	0x20002614
  8006e2c:	40015404 	.word	0x40015404
- 8006e30:	08007aa8 	.word	0x08007aa8
+ 8006e30:	08007a9c 	.word	0x08007a9c
 
 08006e34 <HAL_SAI_MspInit>:
 static uint32_t SAI1_client =0;
@@ -18749,7 +18749,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
  8006f1c:	48001000 	.word	0x48001000
  8006f20:	200025cc 	.word	0x200025cc
  8006f24:	40020408 	.word	0x40020408
- 8006f28:	08007aa8 	.word	0x08007aa8
+ 8006f28:	08007a9c 	.word	0x08007a9c
 
 08006f2c <HAL_MspInit>:
 /* USER CODE END 0 */
@@ -19354,7 +19354,7 @@ LoopForever:
   ldr   sp, =_estack    /* Atollic update: set stack pointer */
  8007150:	20018000 	.word	0x20018000
 	ldr	r3, =_sidata
- 8007154:	08007b84 	.word	0x08007b84
+ 8007154:	08007b78 	.word	0x08007b78
 	ldr	r0, =_sdata
  8007158:	20000000 	.word	0x20000000
 	ldr	r3, =_edata
@@ -19400,10 +19400,10 @@ Infinite_Loop:
  800719e:	4798      	blx	r3
  80071a0:	3501      	adds	r5, #1
  80071a2:	e7f2      	b.n	800718a <__libc_init_array+0x1e>
- 80071a4:	08007b7c 	.word	0x08007b7c
- 80071a8:	08007b7c 	.word	0x08007b7c
- 80071ac:	08007b7c 	.word	0x08007b7c
- 80071b0:	08007b80 	.word	0x08007b80
+ 80071a4:	08007b70 	.word	0x08007b70
+ 80071a8:	08007b70 	.word	0x08007b70
+ 80071ac:	08007b70 	.word	0x08007b70
+ 80071b0:	08007b74 	.word	0x08007b74
 
 080071b4 <memset>:
  80071b4:	4402      	add	r2, r0
@@ -19722,9 +19722,9 @@ Infinite_Loop:
  8007490:	4640      	mov	r0, r8
  8007492:	f000 f881 	bl	8007598 <_printf_i>
  8007496:	e7ea      	b.n	800746e <_svfiprintf_r+0x1aa>
- 8007498:	08007b48 	.word	0x08007b48
- 800749c:	08007b4e 	.word	0x08007b4e
- 80074a0:	08007b52 	.word	0x08007b52
+ 8007498:	08007b3c 	.word	0x08007b3c
+ 800749c:	08007b42 	.word	0x08007b42
+ 80074a0:	08007b46 	.word	0x08007b46
  80074a4:	00000000 	.word	0x00000000
  80074a8:	0800720d 	.word	0x0800720d
 
@@ -20063,8 +20063,8 @@ Infinite_Loop:
  80077c6:	f884 3042 	strb.w	r3, [r4, #66]	; 0x42
  80077ca:	f104 0542 	add.w	r5, r4, #66	; 0x42
  80077ce:	e765      	b.n	800769c <_printf_i+0x104>
- 80077d0:	08007b6a 	.word	0x08007b6a
- 80077d4:	08007b59 	.word	0x08007b59
+ 80077d0:	08007b5e 	.word	0x08007b5e
+ 80077d4:	08007b4d 	.word	0x08007b4d
 
 080077d8 <memcpy>:
  80077d8:	b510      	push	{r4, lr}

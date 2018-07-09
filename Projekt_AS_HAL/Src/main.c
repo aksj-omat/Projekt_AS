@@ -95,13 +95,13 @@ typedef enum{
 	state_menu_enter,	//wykonano akcje wejscia do podmenu
 	state_menu_leave	//wykonano akcje powrotu do menu glownego
 }App_states;
-//opcje dostepne w main menu, indeks odpowiada wyswietlanemu napisowi na LCD (patrz tablica menu_opts)
+//opcje dostepne w main menu, indeks odpowiada wyswietlanemu napisowi na LCD (patrz tablica menu_labels)
 typedef enum{
 	play_audio,
 	record_audio
 }App_menu_opts;
 
-char* menu_opts[] = {"Play", "Rec"};
+char* menu_labels[] = {"Play", "Rec"};
 App_states app_state = state_menu;
 App_menu_opts menu_curr_opt = play_audio;
 /* USER CODE END PV */
@@ -171,7 +171,7 @@ int main(void)
 
   BSP_LCD_GLASS_ScrollSentence("--AUTOMATYCZNA SEKRETARKA AS--",1,SCROLL_SPEED_HIGH);
   BSP_LCD_GLASS_Clear();
-  BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+  BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -280,7 +280,7 @@ void app_do_action(){
 		BSP_LCD_GLASS_DisplayString(audio_volume_chr); //wyswietl akutalny poziom glosnosci
 		audio_play();									//graj audio
 		app_state = state_menu;							//wroc do menu
-		BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);//zaktualizuj etykiete
+		BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);//zaktualizuj etykiete
 		break;
 
 	default:
@@ -436,7 +436,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 			if (menu_curr_opt == 0)
 				menu_curr_opt = MENU_MAIN_OPTS_SIZE;
 			menu_curr_opt = (menu_curr_opt - 1) % MENU_MAIN_OPTS_SIZE;
-			BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+			BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);
 
 		}
 		if (app_state == state_audio_play) { //scisz o 10 procent
@@ -453,7 +453,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		if(app_state == state_menu){ //zmien etykiete o jedna w gore
 			BSP_LCD_GLASS_Clear();
 			menu_curr_opt = (menu_curr_opt + 1) % MENU_MAIN_OPTS_SIZE;
-			BSP_LCD_GLASS_DisplayString(menu_opts[menu_curr_opt]);
+			BSP_LCD_GLASS_DisplayString(menu_labels[menu_curr_opt]);
 		}
 		if(app_state == state_audio_play){ //podglos o 10 procent
 			audio_volume += 10;
